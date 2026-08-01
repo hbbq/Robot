@@ -68,7 +68,8 @@ void DisplayApp::update()
     _faceController.update(
         _readiness.isReady(),
         _robotStateStore.mode(),
-        _robotStateStore.motion());
+        _robotStateStore.motion(),
+        _robotStateStore.autonomousBehavior());
 
     if (_readiness.isReady())
     {

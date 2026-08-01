@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include <RobotActivity.h>
+#include <AutonomousBehaviorType.h>
 #include <RobotMode.h>
 #include <RobotMotion.h>
 
@@ -23,7 +24,8 @@ public:
     void update(
         bool ready,
         RobotMode mode,
-        RobotMotion motion);
+        RobotMotion motion,
+        AutonomousBehaviorType autonomousBehavior);
 
 private:
     IDisplayDriver& _display;
@@ -37,6 +39,9 @@ private:
 
     RobotMotion _lastMotion =
         RobotMotion::Stopped;
+
+    AutonomousBehaviorType _lastAutonomousBehavior =
+        AutonomousBehaviorType::RandomDrive;
 
     bool _dirty = true;
 
@@ -52,6 +57,9 @@ private:
     uint32_t _sleepPhaseStartedMs = 0;
     bool _sleepBreathingUp = false;
 
+    uint32_t _dancePhaseStartedMs = 0;
+    bool _dancePhase = false;
+
     int16_t _idlePupilOffsetX = 0;
     int16_t _idlePupilOffsetY = 0;
 
@@ -59,6 +67,7 @@ private:
         bool ready,
         RobotMode mode,
         RobotMotion motion,
+        AutonomousBehaviorType autonomousBehavior,
         uint32_t nowMs);
 
     void scheduleNextBlink();
@@ -67,9 +76,13 @@ private:
     void draw(
         bool ready,
         RobotMode mode,
-        RobotMotion motion);
+        RobotMotion motion,
+        AutonomousBehaviorType autonomousBehavior);
 
     void drawRemoteControl(
+        RobotMotion motion);
+
+    void drawDance(
         RobotMotion motion);
 
     void drawNotReady();
@@ -116,6 +129,12 @@ private:
 
     static constexpr uint16_t RemoteBackgroundColor =
         0x20C3;
+
+    static constexpr uint16_t DanceBackgroundColorA =
+        0x280A;
+
+    static constexpr uint16_t DanceBackgroundColorB =
+        0x0814;
 
     static constexpr uint16_t EyeColor =
         0xFFFF;

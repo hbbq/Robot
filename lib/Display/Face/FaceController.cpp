@@ -22,6 +22,7 @@ void FaceController::begin()
     _lastBlinkMs = nowMs;
     _lastEyeMoveMs = nowMs;
     _sleepPhaseStartedMs = nowMs;
+    _dancePhaseStartedMs = nowMs;
 
     scheduleNextBlink();
     scheduleNextEyeMove();
@@ -31,7 +32,8 @@ void FaceController::begin()
     draw(
         false,
         RobotMode::Idle,
-        RobotMotion::Stopped);
+        RobotMotion::Stopped,
+        AutonomousBehaviorType::RandomDrive);
 
     _dirty = false;
 }
@@ -39,7 +41,8 @@ void FaceController::begin()
 void FaceController::update(
     bool ready,
     RobotMode mode,
-    RobotMotion motion)
+    RobotMotion motion,
+    AutonomousBehaviorType autonomousBehavior)
 {
     const uint32_t nowMs =
         _clock.millis();
@@ -47,7 +50,8 @@ void FaceController::update(
     const bool stateChanged =
         ready != _lastReady ||
         mode != _lastMode ||
-        motion != _lastMotion;
+        motion != _lastMotion ||
+        autonomousBehavior != _lastAutonomousBehavior;
 
     if (stateChanged)
     {
@@ -64,6 +68,7 @@ void FaceController::update(
         _lastReady = ready;
         _lastMode = mode;
         _lastMotion = motion;
+        _lastAutonomousBehavior = autonomousBehavior;
 
         _dirty = true;
 
@@ -95,6 +100,7 @@ void FaceController::update(
         ready,
         mode,
         motion,
+        autonomousBehavior,
         nowMs);
 
     if (!_dirty)
@@ -105,7 +111,8 @@ void FaceController::update(
     draw(
         ready,
         mode,
-        motion);
+        motion,
+        autonomousBehavior);
 
     _dirty = false;
 }
@@ -114,6 +121,7 @@ void FaceController::updateAnimations(
     bool ready,
     RobotMode mode,
     RobotMotion motion,
+    AutonomousBehaviorType autonomousBehavior,
     uint32_t nowMs)
 {
     if (!ready)
@@ -121,6 +129,26 @@ void FaceController::updateAnimations(
         if (_blinking)
         {
             _blinking = false;
+            _dirty = true;
+        }
+
+        return;
+    }
+
+    if (mode == RobotMode::Autonomous &&
+        autonomousBehavior == AutonomousBehaviorType::Dance)
+    {
+        constexpr uint32_t DanceFrameIntervalMs = 260;
+
+        if (_blinking)
+        {
+            _blinking = false;
+        }
+
+        if (nowMs - _dancePhaseStartedMs >= DanceFrameIntervalMs)
+        {
+            _dancePhaseStartedMs = nowMs;
+            _dancePhase = !_dancePhase;
             _dirty = true;
         }
 
@@ -227,12 +255,25 @@ void FaceController::scheduleNextEyeMove()
 void FaceController::draw(
     bool ready,
     RobotMode mode,
-    RobotMotion motion)
+    RobotMotion motion,
+    AutonomousBehaviorType autonomousBehavior)
 {
     if (!ready)
     {
         _display.clear(BackgroundColor);
         drawNotReady();
+        _display.flush();
+        return;
+    }
+
+    if (mode == RobotMode::Autonomous &&
+        autonomousBehavior == AutonomousBehaviorType::Dance)
+    {
+        _display.clear(
+            _dancePhase
+                ? DanceBackgroundColorA
+                : DanceBackgroundColorB);
+        drawDance(motion);
         _display.flush();
         return;
     }
@@ -294,6 +335,48 @@ void FaceController::draw(
     }
 
     _display.flush();
+}
+
+void FaceController::drawDance(
+    RobotMotion motion)
+{
+    const int16_t centerX = _display.width() / 2;
+    const int16_t centerY = _display.height() / 2;
+    const int16_t bounce = _dancePhase ? -5 : 5;
+    int16_t glance = 0;
+
+    if (motion == RobotMotion::TurningLeft)
+    {
+        glance = -9;
+    }
+    else if (motion == RobotMotion::TurningRight)
+    {
+        glance = 9;
+    }
+
+    // One round eye and one wink make Dance immediately distinct.
+    drawEye(centerX - 42, centerY + bounce, 29, glance, 0);
+    _display.drawLine(
+        centerX + 18,
+        centerY + bounce,
+        centerX + 66,
+        centerY + bounce + 8,
+        EyeColor);
+    _display.drawLine(
+        centerX + 18,
+        centerY + bounce,
+        centerX + 66,
+        centerY + bounce - 8,
+        EyeColor);
+
+    drawSmile(centerX, centerY + 58 + bounce, 70, 15);
+
+    // Compact music notes alternate sides with the beat.
+    const int16_t noteX = _dancePhase ? 22 : _display.width() - 40;
+    const int16_t noteY = centerY - 72;
+    _display.drawLine(noteX, noteY, noteX, noteY + 28, EyeColor);
+    _display.drawLine(noteX, noteY, noteX + 17, noteY - 5, EyeColor);
+    _display.fillCircle(noteX - 5, noteY + 31, 6, EyeColor);
 }
 
 void FaceController::drawRemoteControl(
