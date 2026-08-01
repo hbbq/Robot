@@ -73,6 +73,18 @@ void DeviceNetworkService::update()
         _config.deviceTimeoutMs);
 }
 
+bool DeviceNetworkService::setCapabilities(
+    Capability capabilities)
+{
+    if (_started)
+    {
+        return false;
+    }
+
+    _config.capabilities = capabilities;
+    return true;
+}
+
 bool DeviceNetworkService::sendAnnouncement()
 {
     if (!_started)

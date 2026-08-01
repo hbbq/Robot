@@ -28,6 +28,14 @@ using RobotMotorController = FakeMotorController;
 using RobotMotorController = Tb6612MotorController;
 #endif
 
+#if defined(USE_FAKE_DISTANCE_SENSOR)
+#include <FakeDistanceSensor.h>
+using RobotDistanceSensor = FakeDistanceSensor;
+#else
+#include <Vl53l0xDistanceSensor.h>
+using RobotDistanceSensor = Vl53l0xDistanceSensor;
+#endif
+
 class RobotApp
 {
 public:
@@ -48,6 +56,7 @@ private:
     RobotMotorController  _rightMotor;
     DriveController _driveController;
     MotionController _motionController;
+    RobotDistanceSensor _frontDistanceSensor;
     ReadinessController _readiness;
     LedController _statusLed;
     IdleBehavior _idleBehavior;
@@ -55,6 +64,8 @@ private:
     RandomDriveBehavior _randomDriveBehavior;
     BehaviorController _behaviorController;
     RemoteControlBehavior _remoteControlBehavior;
+
+    bool _distanceSensorFunctional = false;
     
     RobotStateStore _robotStateStore;
 

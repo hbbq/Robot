@@ -5,6 +5,8 @@
 #include <LedControllerConfig.h>
 #include <CommunicationConfig.h>
 #include <ReadinessConfig.h>
+#include <Vl53l0xDistanceSensorConfig.h>
+#include <RandomDriveBehaviorConfig.h>
 
 namespace AppConfig
 {
@@ -21,8 +23,7 @@ namespace AppConfig
                 .deviceType = DeviceType::Robot,
 
                 .capabilities =
-                    Capability::Motors |
-                    Capability::Distance,
+                    Capability::Motors,
 
                 .announcementIntervalMs = 10000,
                 .heartbeatIntervalMs = 1000,
@@ -46,6 +47,28 @@ namespace AppConfig
 
             .notReadyLedMode =
                 LedMode::Pulse
+        };
+
+        // Provisional front VL53L0X wiring. GPIO18/19 are currently
+        // unused by the Robot and avoid motor, LED, USB and UART pins.
+        inline constexpr Vl53l0xDistanceSensorConfig FrontDistanceSensor
+        {
+            .sdaPin = 18,
+            .sclPin = 19,
+            .i2cFrequencyHz = 400000,
+            .measurementPeriodMs = 50,
+            .measurementTimeoutMs = 25,
+            .measurementTimingBudgetUs = 20000,
+            .readingFreshnessMs = 150
+        };
+
+        inline constexpr RandomDriveBehaviorConfig AutonomousBehavior
+        {
+            .obstacleThresholdMillimeters = 250,
+            .backupDistanceMeters = 0.15f,
+            .minimumAvoidanceTurnDegrees = 60.0f,
+            .maximumAvoidanceTurnDegrees = 120.0f,
+            .sensorLossTimeoutMs = 200
         };
 
     #elifdef DEVICE_DISPLAY

@@ -39,6 +39,12 @@ RobotApp::RobotApp()
         _clock,
         AppConfig::Motion),
 
+    #ifndef USE_FAKE_DISTANCE_SENSOR
+      _frontDistanceSensor(
+          _clock,
+          AppConfig::FrontDistanceSensor),
+    #endif
+
       _statusLed(
           AppConfig::StatusLed),
 
@@ -52,8 +58,10 @@ RobotApp::RobotApp()
 
         _randomDriveBehavior(
             _motionController,
+            _frontDistanceSensor,
             _clock,
-            _random),
+            _random,
+            AppConfig::AutonomousBehavior),
 
         _remoteControlBehavior(
             _remoteDriveState,
@@ -69,6 +77,28 @@ void RobotApp::begin()
 
     _statusLed.begin();
     _driveController.begin();
+
+    _distanceSensorFunctional =
+        _frontDistanceSensor.begin();
+
+    #ifdef USE_FAKE_DISTANCE_SENSOR
+    if (_distanceSensorFunctional)
+    {
+        _frontDistanceSensor.setReading(1000);
+    }
+    #endif
+
+    if (_distanceSensorFunctional)
+    {
+        _deviceNetwork.setCapabilities(
+            Capability::Motors |
+            Capability::Distance);
+    }
+    else
+    {
+        Serial.println(
+            "[Robot] Front distance sensor initialization failed");
+    }
 
     _readiness.begin();
 
@@ -94,6 +124,7 @@ void RobotApp::update()
 
     handleModeRequest();
 
+    _frontDistanceSensor.update();
     _motionController.update();
 
     if (!_readiness.isReady())
@@ -195,6 +226,18 @@ void RobotApp::handleModeRequest()
             break;
 
         case RobotMode::Autonomous:
+            if (!_distanceSensorFunctional)
+            {
+                _motionController.stop();
+                _driveController.stop();
+
+                _behaviorController.setBehavior(
+                    _idleBehavior);
+
+                _mode = RobotMode::Idle;
+                break;
+            }
+
             _driveController.stop();
 
             _behaviorController.setBehavior(

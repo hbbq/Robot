@@ -23,6 +23,9 @@ public:
     bool begin();
     void update();
 
+    bool setCapabilities(
+        Capability capabilities);
+
     bool sendAnnouncement();
     bool sendHeartbeat();
     bool sendRobotState(
@@ -38,7 +41,7 @@ private:
     EspNowManager& _espNow;
     DeviceRegistry& _registry;
     IClock& _clock;
-    const DeviceNetworkConfig& _config;
+    DeviceNetworkConfig _config;
 
     bool _started = false;
 
