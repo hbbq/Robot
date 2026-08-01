@@ -10,14 +10,16 @@
 
 namespace
 {
-    constexpr uint16_t BackgroundColor = 0x001F;
-    constexpr uint16_t PanelColor = 0x2124;
-    constexpr uint16_t PanelAltColor = 0x3186;
-    constexpr uint16_t ForegroundColor = 0xFFFF;
-    constexpr uint16_t MutedColor = 0xBDF7;
-    constexpr uint16_t AccentColor = 0x07FF;
-    constexpr uint16_t SuccessColor = 0x07E0;
-    constexpr uint16_t WarningColor = 0xF800;
+    // Low-saturation RGB565 palette for a calmer control interface.
+    constexpr uint16_t BackgroundColor = 0x10A3;
+    constexpr uint16_t PanelColor = 0x1905;
+    constexpr uint16_t PanelAltColor = 0x10C4;
+    constexpr uint16_t BorderColor = 0x29C8;
+    constexpr uint16_t ForegroundColor = 0xDF1D;
+    constexpr uint16_t MutedColor = 0x7411;
+    constexpr uint16_t AccentColor = 0x5CF5;
+    constexpr uint16_t SuccessColor = 0x6CF0;
+    constexpr uint16_t WarningColor = 0xBC2E;
 
     constexpr int16_t ButtonY = 244;
     constexpr int16_t ButtonH = 32;
@@ -228,7 +230,7 @@ void RemoteUiController::draw()
     _display.clear(
         BackgroundColor);
 
-    const uint16_t statusColor =
+    const uint16_t statusDotColor =
         ready ? SuccessColor : WarningColor;
 
     _display.fillRect(
@@ -236,12 +238,32 @@ void RemoteUiController::draw()
         8,
         224,
         30,
-        statusColor);
+        PanelColor);
+
+    _display.drawRect(
+        8,
+        8,
+        224,
+        30,
+        BorderColor);
+
+    _display.fillCircle(
+        20,
+        23,
+        4,
+        statusDotColor);
 
     _display.setTextColor(
-        ready ? BackgroundColor : ForegroundColor);
+        MutedColor);
     _display.setTextSize(1);
-    _display.setCursor(20, 18);
+    _display.setCursor(31, 18);
+    _display.print("ROBOT");
+
+    _display.setTextColor(
+        ForegroundColor);
+    _display.setCursor(
+        ready ? 181 : 175,
+        18);
     _display.print(
         ready ? "ONLINE" : "OFFLINE");
 
@@ -339,7 +361,7 @@ void RemoteUiController::drawModeButton(
             y,
             width,
             height,
-            ForegroundColor);
+            BorderColor);
 
         _display.setTextColor(
             ForegroundColor);
@@ -367,7 +389,7 @@ void RemoteUiController::drawJoystick()
         centerY - radius,
         radius * 2,
         radius * 2,
-        ForegroundColor);
+        BorderColor);
 
     _display.fillRect(
         centerX - radius + 4,
@@ -396,7 +418,7 @@ void RemoteUiController::drawJoystick()
         _display.fillCircle(
             _joystick.knobX(),
             _joystick.knobY(),
-            18,
+            15,
             AccentColor);
     }
     else
