@@ -7,6 +7,7 @@
 #include <Messages/RobotStateMessage.h>
 #include <Messages/DriveCommandMessage.h>
 #include <Messages/SetRobotModeMessage.h>
+#include <Messages/SetAutonomousBehaviorMessage.h>
 #include <IClock.h>
 
 DeviceNetworkService::DeviceNetworkService(
@@ -202,6 +203,24 @@ bool DeviceNetworkService::sendSetRobotMode(
         makeSetRobotModeMessage(
             nextSequenceNumber(),
             mode);
+
+    return _espNow.broadcast(
+        &message,
+        sizeof(message));
+}
+
+bool DeviceNetworkService::sendSetAutonomousBehavior(
+    AutonomousBehaviorType behavior)
+{
+    if (!_started)
+    {
+        return false;
+    }
+
+    const auto message =
+        makeSetAutonomousBehaviorMessage(
+            nextSequenceNumber(),
+            behavior);
 
     return _espNow.broadcast(
         &message,

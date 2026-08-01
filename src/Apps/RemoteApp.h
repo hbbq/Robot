@@ -14,6 +14,7 @@
 #include <Drivers/Cst816TouchDriver.h>
 #include <RemoteUiController.h>
 #include <RobotModeRequestStore.h>
+#include <AutonomousBehaviorRequestStore.h>
 
 class RemoteApp
 {
@@ -36,6 +37,7 @@ private:
     RobotStateStore _robotStateStore;
     RemoteDriveState _remoteDriveState;
     RobotModeRequestStore _robotModeRequestStore;
+    AutonomousBehaviorRequestStore _autonomousBehaviorRequestStore;
 
     WaveshareEsp32C6TouchLcd169DisplayDriver _display;
     Cst816TouchDriver _touch;

@@ -10,6 +10,7 @@ RobotApp::RobotApp()
           _robotStateStore,
           _remoteDriveState,
             _robotModeRequestStore,
+          _autonomousBehaviorRequestStore,
           _clock),
 
       _espNow(
@@ -62,6 +63,16 @@ RobotApp::RobotApp()
             _clock,
             _random,
             AppConfig::AutonomousBehavior),
+
+        _exploreBehavior(
+            _motionController,
+            _frontDistanceSensor,
+            _clock,
+            _random,
+            AppConfig::ExploreBehavior),
+
+        _danceBehavior(
+            _motionController),
 
         _remoteControlBehavior(
             _remoteDriveState,
@@ -120,6 +131,7 @@ void RobotApp::update()
 
     _readiness.update();
 
+    handleAutonomousBehaviorRequest();
     handleModeRequest();
 
     _frontDistanceSensor.update();
@@ -231,7 +243,8 @@ void RobotApp::handleModeRequest()
             break;
 
         case RobotMode::Autonomous:
-            if (!_distanceSensorFunctional)
+            if (!autonomousBehaviorIsAvailable(
+                    _selectedAutonomousBehavior))
             {
                 _motionController.stop();
                 _driveController.stop();
@@ -265,13 +278,86 @@ void RobotApp::handleModeRequest()
             _behaviorController.currentMode()));
 }
 
+void RobotApp::handleAutonomousBehaviorRequest()
+{
+    if (!_autonomousBehaviorRequestStore.hasPendingRequest())
+    {
+        return;
+    }
+
+    const AutonomousBehaviorType requestedBehavior =
+        _autonomousBehaviorRequestStore.requestedBehavior();
+
+    _autonomousBehaviorRequestStore.clear();
+
+    if (!autonomousBehaviorIsAvailable(requestedBehavior))
+    {
+        Serial.printf(
+            "[Robot] Autonomous behavior rejected: %u\n",
+            static_cast<unsigned>(requestedBehavior));
+        return;
+    }
+
+    if (requestedBehavior == _selectedAutonomousBehavior)
+    {
+        return;
+    }
+
+    const bool currentlyAutonomous =
+        _behaviorController.currentMode() ==
+            RobotMode::Autonomous;
+
+    if (currentlyAutonomous)
+    {
+        _motionController.stop();
+        _driveController.stop();
+    }
+
+    _selectedAutonomousBehavior = requestedBehavior;
+
+    if (currentlyAutonomous)
+    {
+        _behaviorController.setBehavior(
+            selectedAutonomousBehavior());
+    }
+
+    Serial.printf(
+        "[Robot] Autonomous behavior selected: %u\n",
+        static_cast<unsigned>(_selectedAutonomousBehavior));
+}
+
 IBehavior& RobotApp::selectedAutonomousBehavior()
 {
     switch (_selectedAutonomousBehavior)
     {
         case AutonomousBehaviorType::RandomDrive:
+            return _randomDriveBehavior;
+
+        case AutonomousBehaviorType::Explore:
+            return _exploreBehavior;
+
+        case AutonomousBehaviorType::Dance:
+            return _danceBehavior;
+
         default:
             return _randomDriveBehavior;
+    }
+}
+
+bool RobotApp::autonomousBehaviorIsAvailable(
+    AutonomousBehaviorType behavior) const
+{
+    switch (behavior)
+    {
+        case AutonomousBehaviorType::RandomDrive:
+        case AutonomousBehaviorType::Explore:
+            return _distanceSensorFunctional;
+
+        case AutonomousBehaviorType::Dance:
+            return true;
+
+        default:
+            return false;
     }
 }
 

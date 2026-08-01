@@ -43,6 +43,12 @@ namespace
     constexpr int16_t JoystickCenterY = 162;
 
     constexpr uint32_t IdlePulseIntervalMs = 700;
+
+    constexpr int16_t BehaviorControlY = 70;
+    constexpr int16_t BehaviorControlH = 55;
+    constexpr int16_t PreviousBehaviorControlX = 12;
+    constexpr int16_t NextBehaviorControlX = 180;
+    constexpr int16_t BehaviorControlW = 48;
 }
 
 RemoteUiController::RemoteUiController(
@@ -124,6 +130,8 @@ void RemoteUiController::handleTouch()
 
     if (!touched)
     {
+        _autonomousSelectionTouchActive = false;
+
         if (_joystick.active())
         {
             _joystick.release();
@@ -133,6 +141,32 @@ void RemoteUiController::handleTouch()
                 0.0f);
 
             _dirty = true;
+        }
+
+        return;
+    }
+
+    if (_robotState.mode() == RobotMode::Autonomous &&
+        isInsidePreviousBehaviorControl(x, y))
+    {
+        if (!_autonomousSelectionTouchActive)
+        {
+            _autonomousSelectionTouchActive = true;
+            _network.sendSetAutonomousBehavior(
+                previousAutonomousBehavior());
+        }
+
+        return;
+    }
+
+    if (_robotState.mode() == RobotMode::Autonomous &&
+        isInsideNextBehaviorControl(x, y))
+    {
+        if (!_autonomousSelectionTouchActive)
+        {
+            _autonomousSelectionTouchActive = true;
+            _network.sendSetAutonomousBehavior(
+                nextAutonomousBehavior());
         }
 
         return;
@@ -450,6 +484,30 @@ void RemoteUiController::drawAutonomousContent()
         1,
         AccentColor);
 
+    _display.drawCircle(
+        PreviousBehaviorControlX + BehaviorControlW / 2,
+        BehaviorControlY + BehaviorControlH / 2,
+        15,
+        BorderColor);
+
+    _display.drawCircle(
+        NextBehaviorControlX + BehaviorControlW / 2,
+        BehaviorControlY + BehaviorControlH / 2,
+        15,
+        BorderColor);
+
+    _display.setTextSize(1);
+    _display.setTextColor(ForegroundColor);
+    _display.setCursor(
+        PreviousBehaviorControlX + 21,
+        BehaviorControlY + 22);
+    _display.print("<");
+
+    _display.setCursor(
+        NextBehaviorControlX + 21,
+        BehaviorControlY + 22);
+    _display.print(">");
+
     const char* motion =
         motionText(_robotState.motion());
 
@@ -641,6 +699,68 @@ bool RemoteUiController::isInsideIdleButton(
         ButtonH);
 }
 
+bool RemoteUiController::isInsidePreviousBehaviorControl(
+    int16_t x,
+    int16_t y) const
+{
+    return isInside(
+        x,
+        y,
+        PreviousBehaviorControlX,
+        BehaviorControlY,
+        BehaviorControlW,
+        BehaviorControlH);
+}
+
+bool RemoteUiController::isInsideNextBehaviorControl(
+    int16_t x,
+    int16_t y) const
+{
+    return isInside(
+        x,
+        y,
+        NextBehaviorControlX,
+        BehaviorControlY,
+        BehaviorControlW,
+        BehaviorControlH);
+}
+
+AutonomousBehaviorType
+RemoteUiController::previousAutonomousBehavior() const
+{
+    switch (_robotState.autonomousBehavior())
+    {
+        case AutonomousBehaviorType::RandomDrive:
+            return AutonomousBehaviorType::Dance;
+
+        case AutonomousBehaviorType::Explore:
+            return AutonomousBehaviorType::RandomDrive;
+
+        case AutonomousBehaviorType::Dance:
+            return AutonomousBehaviorType::Explore;
+    }
+
+    return AutonomousBehaviorType::RandomDrive;
+}
+
+AutonomousBehaviorType
+RemoteUiController::nextAutonomousBehavior() const
+{
+    switch (_robotState.autonomousBehavior())
+    {
+        case AutonomousBehaviorType::RandomDrive:
+            return AutonomousBehaviorType::Explore;
+
+        case AutonomousBehaviorType::Explore:
+            return AutonomousBehaviorType::Dance;
+
+        case AutonomousBehaviorType::Dance:
+            return AutonomousBehaviorType::RandomDrive;
+    }
+
+    return AutonomousBehaviorType::RandomDrive;
+}
+
 const char* RemoteUiController::modeText(
     RobotMode mode) const
 {
@@ -693,6 +813,12 @@ const char* RemoteUiController::autonomousBehaviorText(
     {
         case AutonomousBehaviorType::RandomDrive:
             return "RANDOM DRIVE";
+
+        case AutonomousBehaviorType::Explore:
+            return "EXPLORE";
+
+        case AutonomousBehaviorType::Dance:
+            return "DANCE";
     }
 
     return "?";

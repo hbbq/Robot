@@ -38,6 +38,8 @@ public:
         float angular);
     bool sendSetRobotMode(
         RobotMode mode);
+    bool sendSetAutonomousBehavior(
+        AutonomousBehaviorType behavior);
 
 private:
     EspNowManager& _espNow;

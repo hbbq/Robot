@@ -7,6 +7,7 @@ class IClock;
 class RobotStateStore;
 class RemoteDriveState;
 class RobotModeRequestStore;
+class AutonomousBehaviorRequestStore;
 
 class MessageDispatcher : public IEspNowReceiver
 {
@@ -16,6 +17,7 @@ public:
         RobotStateStore& robotStateStore,
         RemoteDriveState& remoteDriveState,
         RobotModeRequestStore& robotModeRequestStore,
+        AutonomousBehaviorRequestStore& autonomousBehaviorRequestStore,
         IClock& clock);
 
     void onReceive(
@@ -29,6 +31,7 @@ private:
     RobotStateStore& _robotStateStore;
     RemoteDriveState& _remoteDriveState;
     RobotModeRequestStore& _robotModeRequestStore;
+    AutonomousBehaviorRequestStore& _autonomousBehaviorRequestStore;
     IClock& _clock;
 
     void handleAnnouncement(
@@ -56,6 +59,12 @@ private:
         int8_t rssi);
 
     void handleSetRobotMode(
+        const uint8_t senderMac[6],
+        const uint8_t* data,
+        size_t size,
+        int8_t rssi);
+
+    void handleSetAutonomousBehavior(
         const uint8_t senderMac[6],
         const uint8_t* data,
         size_t size,

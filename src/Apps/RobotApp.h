@@ -20,6 +20,9 @@
 #include <RemoteControlBehavior.h>
 #include <RobotModeRequestStore.h>
 #include <AutonomousBehaviorType.h>
+#include <AutonomousBehaviorRequestStore.h>
+#include <ExploreBehavior.h>
+#include <DanceBehavior.h>
 
 #if defined(USE_FAKE_MOTORS)
 #include <FakeMotorController.h>
@@ -63,6 +66,8 @@ private:
     IdleBehavior _idleBehavior;
     ArduinoRandom _random;
     RandomDriveBehavior _randomDriveBehavior;
+    ExploreBehavior _exploreBehavior;
+    DanceBehavior _danceBehavior;
     BehaviorController _behaviorController;
     RemoteControlBehavior _remoteControlBehavior;
 
@@ -79,6 +84,7 @@ private:
         AutonomousBehaviorType::RandomDrive;
 
     RobotModeRequestStore _robotModeRequestStore;
+    AutonomousBehaviorRequestStore _autonomousBehaviorRequestStore;
 
     static constexpr uint32_t RobotStateIntervalMs = 2000;
 
@@ -87,7 +93,10 @@ private:
     RobotActivity getActivity() const;
     void updateRobotState();
     void handleModeRequest();
+    void handleAutonomousBehaviorRequest();
     IBehavior& selectedAutonomousBehavior();
+    bool autonomousBehaviorIsAvailable(
+        AutonomousBehaviorType behavior) const;
 
     // Senare:
     // MotionController _motion;

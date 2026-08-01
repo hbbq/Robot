@@ -9,5 +9,6 @@ enum class MessageType : uint8_t
     Heartbeat,
     RobotState,
     DriveCommand,
-    SetRobotMode
+    SetRobotMode,
+    SetAutonomousBehavior
 };

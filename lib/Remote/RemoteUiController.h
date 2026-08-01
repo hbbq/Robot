@@ -55,6 +55,7 @@ private:
 
     uint32_t _idlePulseStartedMs = 0;
     bool _idlePulseBright = false;
+    bool _autonomousSelectionTouchActive = false;
 
     void handleTouch();
     void updateState();
@@ -107,6 +108,17 @@ private:
     bool isInsideIdleButton(
         int16_t x,
         int16_t y) const;
+
+    bool isInsidePreviousBehaviorControl(
+        int16_t x,
+        int16_t y) const;
+
+    bool isInsideNextBehaviorControl(
+        int16_t x,
+        int16_t y) const;
+
+    AutonomousBehaviorType previousAutonomousBehavior() const;
+    AutonomousBehaviorType nextAutonomousBehavior() const;
 
     const char* modeText(
         RobotMode mode) const;

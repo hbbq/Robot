@@ -15,6 +15,7 @@
 #include <Drivers/WaveshareEsp32C6TouchLcd147DisplayDriver.h>
 #include <ArduinoRandom.h>
 #include <RemoteDriveState.h>
+#include <AutonomousBehaviorRequestStore.h>
 
 class DisplayApp
 {
@@ -39,6 +40,7 @@ private:
     RobotStateStore _robotStateStore;
     RemoteDriveState _remoteDriveState;
     RobotModeRequestStore _robotModeRequestStore;
+    AutonomousBehaviorRequestStore _autonomousBehaviorRequestStore;
 
     WaveshareEsp32C6TouchLcd147DisplayDriver _display;
     FaceController _faceController;

@@ -4,5 +4,7 @@
 
 enum class AutonomousBehaviorType : uint8_t
 {
-    RandomDrive = 0
+    RandomDrive = 0,
+    Explore,
+    Dance
 };

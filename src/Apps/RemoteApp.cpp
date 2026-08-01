@@ -10,6 +10,7 @@ RemoteApp::RemoteApp()
         _robotStateStore,
         _remoteDriveState,
         _robotModeRequestStore,
+        _autonomousBehaviorRequestStore,
         _clock),
 
       _espNow(

@@ -9,11 +9,13 @@
 #include <Messages/RobotStateMessage.h>
 #include <Messages/DriveCommandMessage.h>
 #include <Messages/SetRobotModeMessage.h>
+#include <Messages/SetAutonomousBehaviorMessage.h>
 #include <Messages/MessageHeader.h>
 #include <RobotStateStore.h>
 #include <RemoteDriveState.h>
 #include <IClock.h>
 #include <RobotModeRequestStore.h>
+#include <AutonomousBehaviorRequestStore.h>
 
 #include <cstring>
 
@@ -41,11 +43,14 @@ MessageDispatcher::MessageDispatcher(
     RobotStateStore& robotStateStore,
     RemoteDriveState& remoteDriveState,
     RobotModeRequestStore& robotModeRequestStore,
+    AutonomousBehaviorRequestStore& autonomousBehaviorRequestStore,
     IClock& clock)
     : _deviceRegistry(deviceRegistry),
       _robotStateStore(robotStateStore),
         _remoteDriveState(remoteDriveState),
         _robotModeRequestStore(robotModeRequestStore),
+        _autonomousBehaviorRequestStore(
+            autonomousBehaviorRequestStore),
       _clock(clock)
 {
 }
@@ -117,6 +122,14 @@ void MessageDispatcher::onReceive(
 
         case MessageType::SetRobotMode:
             handleSetRobotMode(
+                senderMac,
+                data,
+                size,
+                rssi);
+            break;
+
+        case MessageType::SetAutonomousBehavior:
+            handleSetAutonomousBehavior(
                 senderMac,
                 data,
                 size,
@@ -279,4 +292,37 @@ void MessageDispatcher::handleSetRobotMode(
 
     _robotModeRequestStore.request(
         message->mode);
+}
+
+void MessageDispatcher::handleSetAutonomousBehavior(
+    const uint8_t senderMac[6],
+    const uint8_t* data,
+    size_t size,
+    int8_t rssi)
+{
+    if (!senderMatchesDeviceType(
+            _deviceRegistry,
+            senderMac,
+            DeviceType::Remote))
+    {
+        return;
+    }
+
+    const auto message =
+        MessageSerializer::deserialize<
+            SetAutonomousBehaviorMessage>(
+                data,
+                size);
+
+    if (!message)
+    {
+        return;
+    }
+
+    Serial.printf(
+        "[Robot] Autonomous behavior requested: %u\n",
+        static_cast<unsigned>(message->behavior));
+
+    _autonomousBehaviorRequestStore.request(
+        message->behavior);
 }

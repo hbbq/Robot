@@ -7,6 +7,7 @@
 #include <ReadinessConfig.h>
 #include <Vl53l0xDistanceSensorConfig.h>
 #include <RandomDriveBehaviorConfig.h>
+#include <ExploreBehaviorConfig.h>
 
 namespace AppConfig
 {
@@ -69,6 +70,21 @@ namespace AppConfig
             .minimumAvoidanceTurnDegrees = 60.0f,
             .maximumAvoidanceTurnDegrees = 120.0f,
             .sensorLossTimeoutMs = 200
+        };
+
+        inline constexpr ExploreBehaviorConfig ExploreBehavior
+        {
+            .obstacleThresholdMillimeters = 250,
+            .backupDistanceMeters = 0.15f,
+            .minimumAvoidanceTurnDegrees = 55.0f,
+            .maximumAvoidanceTurnDegrees = 110.0f,
+            .sensorLossTimeoutMs = 200,
+            .minimumForwardDistanceMeters = 0.8f,
+            .maximumForwardDistanceMeters = 1.8f,
+            .courseCorrectionChancePercent = 20,
+            .minimumCourseCorrectionDegrees = 20.0f,
+            .maximumCourseCorrectionDegrees = 45.0f,
+            .pauseBetweenMovesMs = 250
         };
 
     #elifdef DEVICE_DISPLAY
