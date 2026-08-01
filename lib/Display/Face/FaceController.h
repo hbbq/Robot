@@ -81,6 +81,23 @@ private:
     void drawTurningRight();
     void drawBlink();
 
+    void drawSmile(
+        int16_t centerX,
+        int16_t centerY,
+        int16_t width,
+        int16_t depth = 8);
+
+    void drawFlatMouth(
+        int16_t centerX,
+        int16_t centerY,
+        int16_t width);
+
+    void drawConcernedMouth(
+        int16_t centerX,
+        int16_t centerY,
+        int16_t width,
+        int16_t depth = 6);
+
     void drawEye(
         int16_t centerX,
         int16_t centerY,

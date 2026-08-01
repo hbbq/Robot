@@ -357,6 +357,11 @@ void FaceController::drawRemoteControl(
         rightX + 28,
         centerY - 39,
         EyeColor);
+
+    drawFlatMouth(
+        _display.width() / 2,
+        centerY + 55,
+        44);
 }
 
 void FaceController::drawSleeping()
@@ -409,6 +414,12 @@ void FaceController::drawSleeping()
     _display.drawLine(zX, zY, zX + 18, zY, EyeColor);
     _display.drawLine(zX + 18, zY, zX, zY + 18, EyeColor);
     _display.drawLine(zX, zY + 18, zX + 18, zY + 18, EyeColor);
+
+    drawSmile(
+        _display.width() / 2,
+        centerY + 55,
+        36,
+        5);
 }
 
 void FaceController::drawNotReady()
@@ -438,6 +449,11 @@ void FaceController::drawNotReady()
         EyeWidth,
         EyeHeight,
         EyeColor);
+
+    drawFlatMouth(
+        _display.width() / 2,
+        centerY + 52,
+        42);
 }
 
 void FaceController::drawIdle()
@@ -464,6 +480,11 @@ void FaceController::drawIdle()
         28,
         _idlePupilOffsetX,
         _idlePupilOffsetY);
+
+    drawSmile(
+        _display.width() / 2,
+        centerY + 58,
+        50);
 }
 
 void FaceController::drawMovingForward()
@@ -486,6 +507,12 @@ void FaceController::drawMovingForward()
         rightX,
         centerY,
         32);
+
+    drawSmile(
+        _display.width() / 2,
+        centerY + 62,
+        58,
+        10);
 }
 
 void FaceController::drawMovingBackward()
@@ -512,6 +539,11 @@ void FaceController::drawMovingBackward()
         26,
         0,
         7);
+
+    drawConcernedMouth(
+        _display.width() / 2,
+        centerY + 58,
+        46);
 }
 
 void FaceController::drawTurningLeft()
@@ -538,6 +570,12 @@ void FaceController::drawTurningLeft()
         28,
         -10,
         0);
+
+    drawSmile(
+        _display.width() / 2 - 6,
+        centerY + 58,
+        44,
+        6);
 }
 
 void FaceController::drawTurningRight()
@@ -564,6 +602,12 @@ void FaceController::drawTurningRight()
         28,
         10,
         0);
+
+    drawSmile(
+        _display.width() / 2 + 6,
+        centerY + 58,
+        44,
+        6);
 }
 
 void FaceController::drawBlink()
@@ -592,6 +636,71 @@ void FaceController::drawBlink()
         centerY - EyeHeight / 2,
         EyeWidth,
         EyeHeight,
+        EyeColor);
+
+    drawSmile(
+        _display.width() / 2,
+        centerY + 58,
+        48,
+        7);
+}
+
+void FaceController::drawSmile(
+    int16_t centerX,
+    int16_t centerY,
+    int16_t width,
+    int16_t depth)
+{
+    const int16_t halfWidth = width / 2;
+
+    _display.drawLine(
+        centerX - halfWidth,
+        centerY,
+        centerX,
+        centerY + depth,
+        EyeColor);
+
+    _display.drawLine(
+        centerX,
+        centerY + depth,
+        centerX + halfWidth,
+        centerY,
+        EyeColor);
+}
+
+void FaceController::drawFlatMouth(
+    int16_t centerX,
+    int16_t centerY,
+    int16_t width)
+{
+    _display.drawLine(
+        centerX - width / 2,
+        centerY,
+        centerX + width / 2,
+        centerY,
+        EyeColor);
+}
+
+void FaceController::drawConcernedMouth(
+    int16_t centerX,
+    int16_t centerY,
+    int16_t width,
+    int16_t depth)
+{
+    const int16_t halfWidth = width / 2;
+
+    _display.drawLine(
+        centerX - halfWidth,
+        centerY + depth,
+        centerX,
+        centerY,
+        EyeColor);
+
+    _display.drawLine(
+        centerX,
+        centerY,
+        centerX + halfWidth,
+        centerY + depth,
         EyeColor);
 }
 
