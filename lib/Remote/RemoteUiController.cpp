@@ -43,6 +43,7 @@ namespace
     constexpr int16_t JoystickCenterY = 162;
 
     constexpr uint32_t IdlePulseIntervalMs = 700;
+    constexpr uint32_t SelectionTouchReleaseMs = 150;
 
     constexpr int16_t BehaviorControlY = 70;
     constexpr int16_t BehaviorControlH = 55;
@@ -128,9 +129,17 @@ void RemoteUiController::handleTouch()
     const bool touched =
         _touch.newTouch(x, y);
 
+    const uint32_t nowMs =
+        _clock.millis();
+
     if (!touched)
     {
-        _autonomousSelectionTouchActive = false;
+        if (_autonomousSelectionTouchActive &&
+            nowMs - _lastAutonomousSelectionTouchMs >=
+                SelectionTouchReleaseMs)
+        {
+            _autonomousSelectionTouchActive = false;
+        }
 
         if (_joystick.active())
         {
@@ -146,12 +155,18 @@ void RemoteUiController::handleTouch()
         return;
     }
 
+    if (_autonomousSelectionTouchActive)
+    {
+        _lastAutonomousSelectionTouchMs = nowMs;
+    }
+
     if (_robotState.mode() == RobotMode::Autonomous &&
         isInsidePreviousBehaviorControl(x, y))
     {
         if (!_autonomousSelectionTouchActive)
         {
             _autonomousSelectionTouchActive = true;
+            _lastAutonomousSelectionTouchMs = nowMs;
             _network.sendSetAutonomousBehavior(
                 previousAutonomousBehavior());
         }
@@ -165,6 +180,7 @@ void RemoteUiController::handleTouch()
         if (!_autonomousSelectionTouchActive)
         {
             _autonomousSelectionTouchActive = true;
+            _lastAutonomousSelectionTouchMs = nowMs;
             _network.sendSetAutonomousBehavior(
                 nextAutonomousBehavior());
         }

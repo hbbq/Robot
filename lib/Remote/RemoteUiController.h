@@ -56,6 +56,7 @@ private:
     uint32_t _idlePulseStartedMs = 0;
     bool _idlePulseBright = false;
     bool _autonomousSelectionTouchActive = false;
+    uint32_t _lastAutonomousSelectionTouchMs = 0;
 
     void handleTouch();
     void updateState();
