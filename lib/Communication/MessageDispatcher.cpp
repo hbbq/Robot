@@ -17,6 +17,25 @@
 
 #include <cstring>
 
+namespace
+{
+    bool senderMatchesDeviceType(
+        const DeviceRegistry& registry,
+        const uint8_t senderMac[6],
+        DeviceType expectedType)
+    {
+        const auto device =
+            registry.findByMac(senderMac);
+
+        if (!device.has_value())
+        {
+            return false;
+        }
+
+        return device->deviceType() == expectedType;
+    }
+}
+
 MessageDispatcher::MessageDispatcher(
     DeviceRegistry& deviceRegistry,
     RobotStateStore& robotStateStore,
@@ -171,6 +190,14 @@ void MessageDispatcher::handleRobotState(
     size_t size,
     int8_t rssi)
 {
+    if (!senderMatchesDeviceType(
+            _deviceRegistry,
+            senderMac,
+            DeviceType::Robot))
+    {
+        return;
+    }
+
     const auto message =
         MessageSerializer::deserialize<
             RobotStateMessage>(
@@ -182,6 +209,7 @@ void MessageDispatcher::handleRobotState(
         return;
     }
 
+    // Robot is authoritative for actual robot state.
     _robotStateStore.setState(
         message->mode,
         message->motion);
@@ -193,6 +221,14 @@ void MessageDispatcher::handleDriveCommand(
     size_t size,
     int8_t rssi)
 {
+    if (!senderMatchesDeviceType(
+            _deviceRegistry,
+            senderMac,
+            DeviceType::Remote))
+    {
+        return;
+    }
+
     const auto message =
         MessageSerializer::deserialize<
             DriveCommandMessage>(
@@ -216,6 +252,14 @@ void MessageDispatcher::handleSetRobotMode(
     size_t size,
     int8_t rssi)
 {
+    if (!senderMatchesDeviceType(
+            _deviceRegistry,
+            senderMac,
+            DeviceType::Remote))
+    {
+        return;
+    }
+
     const auto message =
         MessageSerializer::deserialize<
             SetRobotModeMessage>(

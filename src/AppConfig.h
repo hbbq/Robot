@@ -32,6 +32,9 @@ namespace AppConfig
 
         inline constexpr ReadinessConfig Readiness
 {
+            .requiredDeviceType =
+                DeviceType::Display,
+
             .requiredCapabilities =
                 Capability::Display,
 
@@ -67,6 +70,9 @@ namespace AppConfig
         
         inline constexpr ReadinessConfig Readiness
         {
+            .requiredDeviceType =
+                DeviceType::Robot,
+
             .requiredCapabilities =
                 Capability::Motors,
 
@@ -102,6 +108,9 @@ namespace AppConfig
         
         inline constexpr ReadinessConfig Readiness
         {
+            .requiredDeviceType =
+                DeviceType::Robot,
+
             .requiredCapabilities =
                 Capability::Motors,
 

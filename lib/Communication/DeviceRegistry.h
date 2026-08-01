@@ -42,6 +42,10 @@ public:
     bool hasAllCapabilities(
         Capability requiredCapabilities) const;
 
+    bool hasOnlineDeviceWithAllCapabilities(
+        DeviceType deviceType,
+        Capability requiredCapabilities) const;
+
     std::optional<DeviceInfo> find(
         DeviceType deviceType) const;
 

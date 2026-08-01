@@ -10,20 +10,30 @@
 
 namespace
 {
-    constexpr uint16_t BackgroundColor = 0x0000;
+    constexpr uint16_t BackgroundColor = 0x001F;
+    constexpr uint16_t PanelColor = 0x2124;
+    constexpr uint16_t PanelAltColor = 0x3186;
     constexpr uint16_t ForegroundColor = 0xFFFF;
+    constexpr uint16_t MutedColor = 0xBDF7;
+    constexpr uint16_t AccentColor = 0x07FF;
+    constexpr uint16_t SuccessColor = 0x07E0;
+    constexpr uint16_t WarningColor = 0xF800;
 
-    constexpr int16_t ButtonY = 245;
-    constexpr int16_t ButtonH = 30;
+    constexpr int16_t ButtonY = 244;
+    constexpr int16_t ButtonH = 32;
 
-    constexpr int16_t IdleButtonX = 5;
+    constexpr int16_t IdleButtonX = 7;
     constexpr int16_t IdleButtonW = 70;
 
-    constexpr int16_t AutoButtonX = 85;
+    constexpr int16_t AutoButtonX = 86;
     constexpr int16_t AutoButtonW = 70;
 
     constexpr int16_t RemoteButtonX = 165;
-    constexpr int16_t RemoteButtonW = 70;
+    constexpr int16_t RemoteButtonW = 68;
+
+    constexpr int16_t JoystickRadius = 48;
+    constexpr int16_t JoystickCenterX = 120;
+    constexpr int16_t JoystickCenterY = 162;
 }
 
 RemoteUiController::RemoteUiController(
@@ -40,9 +50,9 @@ RemoteUiController::RemoteUiController(
       _readiness(readiness),
       _clock(clock),
       _joystick(
-          120,
-          145,
-          85)
+          JoystickCenterX,
+          JoystickCenterY,
+          JoystickRadius)
 {
 }
 
@@ -212,58 +222,58 @@ void RemoteUiController::requestMode(
 
 void RemoteUiController::draw()
 {
+    const bool ready =
+        _readiness.isReady();
+
     _display.clear(
         BackgroundColor);
 
+    const uint16_t statusColor =
+        ready ? SuccessColor : WarningColor;
+
+    _display.fillRect(
+        8,
+        8,
+        224,
+        30,
+        statusColor);
+
+    _display.setTextColor(
+        ready ? BackgroundColor : ForegroundColor);
+    _display.setTextSize(1);
+    _display.setCursor(20, 18);
+    _display.print(
+        ready ? "ONLINE" : "OFFLINE");
+
+    _display.fillRect(
+        8,
+        46,
+        224,
+        52,
+        PanelColor);
+
     _display.setTextColor(
         ForegroundColor);
-
-    _display.setTextSize(1);
-
-    // -------------------------
-    // Connection
-    // -------------------------
-
-    _display.setCursor(8, 8);
-
-    if (_readiness.isReady())
-    {
-        _display.print(
-            "ROBOT: CONNECTED");
-    }
-    else
-    {
-        _display.print(
-            "ROBOT: DISCONNECTED");
-    }
-
-    // -------------------------
-    // Robot state
-    // -------------------------
-
-    _display.setCursor(8, 24);
-
-    _display.print("Mode: ");
+    _display.setCursor(18, 56);
+    _display.print("MODE: ");
     _display.print(
         modeText(
             _robotState.mode()));
 
-    _display.setCursor(8, 38);
-
-    _display.print("Motion: ");
+    _display.setCursor(18, 74);
+    _display.print("MOTION: ");
     _display.print(
         motionText(
             _robotState.motion()));
 
-    // -------------------------
-    // Joystick
-    // -------------------------
+    _display.fillRect(
+        8,
+        108,
+        224,
+        122,
+        PanelAltColor);
 
     drawJoystick();
-
-    // -------------------------
-    // Mode buttons
-    // -------------------------
 
     drawModeButton(
         IdleButtonX,
@@ -303,27 +313,41 @@ void RemoteUiController::drawModeButton(
     const char* text,
     bool selected)
 {
-    _display.drawRect(
-        x,
-        y,
-        width,
-        height,
-        ForegroundColor);
-
     if (selected)
     {
         _display.fillRect(
-            x + 3,
-            y + height - 5,
-            width - 6,
-            3,
+            x,
+            y,
+            width,
+            height,
+            AccentColor);
+
+        _display.setTextColor(
+            BackgroundColor);
+    }
+    else
+    {
+        _display.fillRect(
+            x,
+            y,
+            width,
+            height,
+            PanelColor);
+
+        _display.drawRect(
+            x,
+            y,
+            width,
+            height,
+            ForegroundColor);
+
+        _display.setTextColor(
             ForegroundColor);
     }
 
     _display.setCursor(
-        x + 10,
-        y + 10);
-
+        x + 11,
+        y + 11);
     _display.print(text);
 }
 
@@ -338,44 +362,49 @@ void RemoteUiController::drawJoystick()
     const int16_t radius =
         _joystick.radius();
 
-    _display.drawCircle(
-        centerX,
-        centerY,
-        radius,
+    _display.drawRect(
+        centerX - radius,
+        centerY - radius,
+        radius * 2,
+        radius * 2,
         ForegroundColor);
+
+    _display.fillRect(
+        centerX - radius + 4,
+        centerY - radius + 4,
+        (radius * 2) - 8,
+        (radius * 2) - 8,
+        PanelColor);
 
     _display.drawLine(
         centerX,
         centerY - radius,
         centerX,
         centerY + radius,
-        ForegroundColor);
+        MutedColor);
 
     _display.drawLine(
         centerX - radius,
         centerY,
         centerX + radius,
         centerY,
-        ForegroundColor);
+        MutedColor);
 
-    // Bara aktiv joystick när roboten
-    // faktiskt rapporterar REMOTE.
     if (_robotState.mode() ==
         RobotMode::RemoteControl)
     {
         _display.fillCircle(
             _joystick.knobX(),
             _joystick.knobY(),
-            16,
-            ForegroundColor);
+            18,
+            AccentColor);
     }
     else
     {
-        // liten neutral mittpunkt
         _display.fillCircle(
             centerX,
             centerY,
-            5,
+            9,
             ForegroundColor);
     }
 }

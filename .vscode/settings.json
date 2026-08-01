@@ -1,0 +1,32 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^& \"C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe\" run -e display$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^powershell -NoProfile -Command \"Set-Location 'c:\\\\SC\\\\BQ\\\\Robot'; & 'C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe' run -e display\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^powershell -NoProfile -Command \"Set-Location 'c:\\\\SC\\\\BQ\\\\Robot'; & 'C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe' run -e remote\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^& \"C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe\" run -e robot; if \\(\\$LASTEXITCODE -ne 0\\) \\{ exit \\$LASTEXITCODE \\}; & \"C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe\" run -e display; if \\(\\$LASTEXITCODE -ne 0\\) \\{ exit \\$LASTEXITCODE \\}; & \"C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe\" run -e remote$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^& \"C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe\" run -e robot; if \\(\\$LASTEXITCODE -ne 0\\) \\{ Write-Error \"robot failed\"; exit \\$LASTEXITCODE \\}; Write-Host \"robot: SUCCESS\"; & \"C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe\" run -e display; if \\(\\$LASTEXITCODE -ne 0\\) \\{ Write-Error \"display failed\"; exit \\$LASTEXITCODE \\}; Write-Host \"display: SUCCESS\"; & \"C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe\" run -e remote; if \\(\\$LASTEXITCODE -ne 0\\) \\{ Write-Error \"remote failed\"; exit \\$LASTEXITCODE \\}; Write-Host \"remote: SUCCESS\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^& \"C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe\" run -e robot -q; if \\(\\$LASTEXITCODE -ne 0\\) \\{ exit \\$LASTEXITCODE \\}; Write-Host \"robot: SUCCESS\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^& \"C:\\\\Users\\\\mail\\\\\\.platformio\\\\penv\\\\Scripts\\\\pio\\.exe\" run -e display -q; if \\(\\$LASTEXITCODE -ne 0\\) \\{ exit \\$LASTEXITCODE \\}; Write-Host \"display: SUCCESS\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

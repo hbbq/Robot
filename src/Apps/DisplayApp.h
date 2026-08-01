@@ -10,6 +10,7 @@
 #include <ReadinessController.h>
 #include <LedController.h>
 #include <RobotStateStore.h>
+#include <RobotModeRequestStore.h>
 #include <Face/FaceController.h>
 #include <Drivers/WaveshareEsp32C6TouchLcd147DisplayDriver.h>
 #include <ArduinoRandom.h>
@@ -37,6 +38,7 @@ private:
     
     RobotStateStore _robotStateStore;
     RemoteDriveState _remoteDriveState;
+    RobotModeRequestStore _robotModeRequestStore;
 
     WaveshareEsp32C6TouchLcd147DisplayDriver _display;
     FaceController _faceController;

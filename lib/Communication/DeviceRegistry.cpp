@@ -146,6 +146,46 @@ bool DeviceRegistry::hasAllCapabilities(
     return result;
 }
 
+bool DeviceRegistry::hasOnlineDeviceWithAllCapabilities(
+    DeviceType deviceType,
+    Capability requiredCapabilities) const
+{
+    if (deviceType == DeviceType::Unknown ||
+        requiredCapabilities == Capability::None)
+    {
+        return false;
+    }
+
+    portENTER_CRITICAL(&_mutex);
+
+    for (size_t index = 0;
+         index < _deviceCount;
+         ++index)
+    {
+        const auto& device =
+            _devices[index];
+
+        if (!device.isOnline() ||
+            device.deviceType() != deviceType)
+        {
+            continue;
+        }
+
+        const Capability available =
+            device.capabilities();
+
+        if ((available & requiredCapabilities) ==
+            requiredCapabilities)
+        {
+            portEXIT_CRITICAL(&_mutex);
+            return true;
+        }
+    }
+
+    portEXIT_CRITICAL(&_mutex);
+    return false;
+}
+
 std::optional<DeviceInfo>
 DeviceRegistry::find(
     DeviceType deviceType) const

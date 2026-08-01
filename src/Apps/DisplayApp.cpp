@@ -18,6 +18,7 @@ DisplayApp::DisplayApp()
         _deviceRegistry,
         _robotStateStore,
         _remoteDriveState,
+        _robotModeRequestStore,
         _clock),
 
       _espNow(

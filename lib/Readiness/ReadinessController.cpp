@@ -30,7 +30,8 @@ void ReadinessController::begin()
 void ReadinessController::update()
 {
     const bool requirementsMet =
-        _deviceRegistry.hasAllCapabilities(
+        _deviceRegistry.hasOnlineDeviceWithAllCapabilities(
+            _config.requiredDeviceType,
             _config.requiredCapabilities);
 
     setState(
