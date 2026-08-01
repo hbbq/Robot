@@ -21,6 +21,7 @@ void FaceController::begin()
 
     _lastBlinkMs = nowMs;
     _lastEyeMoveMs = nowMs;
+    _sleepPhaseStartedMs = nowMs;
 
     scheduleNextBlink();
     scheduleNextEyeMove();
@@ -126,6 +127,27 @@ void FaceController::updateAnimations(
         return;
     }
 
+    if (mode == RobotMode::Idle)
+    {
+        constexpr uint32_t SleepBreathingIntervalMs = 1200;
+
+        if (_blinking)
+        {
+            _blinking = false;
+            _dirty = true;
+        }
+
+        if (nowMs - _sleepPhaseStartedMs >=
+            SleepBreathingIntervalMs)
+        {
+            _sleepPhaseStartedMs = nowMs;
+            _sleepBreathingUp = !_sleepBreathingUp;
+            _dirty = true;
+        }
+
+        return;
+    }
+
     constexpr uint32_t BlinkDurationMs = 90;
 
     // Blinkning oberoende av RobotActivity
@@ -207,14 +229,26 @@ void FaceController::draw(
     RobotMode mode,
     RobotMotion motion)
 {
-    _display.clear(BackgroundColor);
-
     if (!ready)
     {
+        _display.clear(BackgroundColor);
         drawNotReady();
         _display.flush();
         return;
     }
+
+    if (mode == RobotMode::Idle)
+    {
+        _display.clear(SleepBackgroundColor);
+        drawSleeping();
+        _display.flush();
+        return;
+    }
+
+    _display.clear(
+        mode == RobotMode::RemoteControl
+            ? RemoteBackgroundColor
+            : AutonomousBackgroundColor);
 
     if (_blinking)
     {
@@ -265,8 +299,6 @@ void FaceController::draw(
 void FaceController::drawRemoteControl(
     RobotMotion motion)
 {
-    _display.clear(0x6666);
-
     const int16_t centerY =
         _display.height() / 2;
 
@@ -310,6 +342,73 @@ void FaceController::drawRemoteControl(
         25,
         pupilOffsetX,
         pupilOffsetY);
+
+    // Angled brows give remote control a focused expression.
+    _display.drawLine(
+        leftX - 28,
+        centerY - 39,
+        leftX + 23,
+        centerY - 31,
+        EyeColor);
+
+    _display.drawLine(
+        rightX - 23,
+        centerY - 31,
+        rightX + 28,
+        centerY - 39,
+        EyeColor);
+}
+
+void FaceController::drawSleeping()
+{
+    const int16_t centerY =
+        _display.height() / 2 +
+        (_sleepBreathingUp ? 2 : 0);
+
+    const int16_t leftX =
+        _display.width() / 3;
+
+    const int16_t rightX =
+        _display.width() * 2 / 3;
+
+    constexpr int16_t HalfEyeWidth = 27;
+
+    // Soft downward curves suggest closed, sleeping eyes.
+    _display.drawLine(
+        leftX - HalfEyeWidth,
+        centerY - 4,
+        leftX,
+        centerY + 5,
+        EyeColor);
+    _display.drawLine(
+        leftX,
+        centerY + 5,
+        leftX + HalfEyeWidth,
+        centerY - 4,
+        EyeColor);
+
+    _display.drawLine(
+        rightX - HalfEyeWidth,
+        centerY - 4,
+        rightX,
+        centerY + 5,
+        EyeColor);
+    _display.drawLine(
+        rightX,
+        centerY + 5,
+        rightX + HalfEyeWidth,
+        centerY - 4,
+        EyeColor);
+
+    const int16_t zX =
+        _display.width() - 48;
+
+    const int16_t zY =
+        centerY - 70;
+
+    _display.drawLine(zX, zY, zX + 18, zY, EyeColor);
+    _display.drawLine(zX + 18, zY, zX, zY + 18, EyeColor);
+    _display.drawLine(zX, zY + 18, zX + 18, zY + 18, EyeColor);
 }
 
 void FaceController::drawNotReady()

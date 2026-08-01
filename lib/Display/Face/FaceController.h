@@ -49,6 +49,9 @@ private:
     uint32_t _lastEyeMoveMs = 0;
     uint32_t _nextEyeMoveDelayMs = 0;
 
+    uint32_t _sleepPhaseStartedMs = 0;
+    bool _sleepBreathingUp = false;
+
     int16_t _idlePupilOffsetX = 0;
     int16_t _idlePupilOffsetY = 0;
 
@@ -70,6 +73,7 @@ private:
         RobotMotion motion);
 
     void drawNotReady();
+    void drawSleeping();
     void drawIdle();
     void drawMovingForward();
     void drawMovingBackward();
@@ -86,6 +90,15 @@ private:
 
     static constexpr uint16_t BackgroundColor =
         0x0000;
+
+    static constexpr uint16_t SleepBackgroundColor =
+        0x0863;
+
+    static constexpr uint16_t AutonomousBackgroundColor =
+        0x08C3;
+
+    static constexpr uint16_t RemoteBackgroundColor =
+        0x20C3;
 
     static constexpr uint16_t EyeColor =
         0xFFFF;
