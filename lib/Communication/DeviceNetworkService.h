@@ -1,0 +1,50 @@
+#pragma once
+
+#include <cstdint>
+
+#include <DeviceNetworkConfig.h>
+#include <RobotActivity.h>
+#include <RobotMode.h>
+#include <RobotMotion.h>
+
+class DeviceRegistry;
+class EspNowManager;
+class IClock;
+
+class DeviceNetworkService
+{
+public:
+    DeviceNetworkService(
+        EspNowManager& espNow,
+        DeviceRegistry& registry,
+        IClock& clock,
+        const DeviceNetworkConfig& config);
+
+    bool begin();
+    void update();
+
+    bool sendAnnouncement();
+    bool sendHeartbeat();
+    bool sendRobotState(
+        RobotMode mode,
+        RobotMotion motion);
+    bool sendDriveCommand(
+        float linear,
+        float angular);
+    bool sendSetRobotMode(
+        RobotMode mode);
+
+private:
+    EspNowManager& _espNow;
+    DeviceRegistry& _registry;
+    IClock& _clock;
+    const DeviceNetworkConfig& _config;
+
+    bool _started = false;
+
+    uint32_t _sequenceNumber = 0;
+    uint32_t _lastAnnouncementMs = 0;
+    uint32_t _lastHeartbeatMs = 0;
+
+    uint32_t nextSequenceNumber();
+};
