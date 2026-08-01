@@ -71,6 +71,11 @@ void RandomDriveBehavior::update()
     }
 }
 
+RobotMode RandomDriveBehavior::mode() const
+{
+    return RobotMode::Autonomous;
+}
+
 void RandomDriveBehavior::startWaiting()
 {
     _state = State::Waiting;

@@ -6,6 +6,7 @@
 #include <Messages/MessageHeader.h>
 #include <RobotMode.h>
 #include <RobotMotion.h>
+#include <AutonomousBehaviorType.h>
 
 struct RobotStateMessage
 {
@@ -13,8 +14,9 @@ struct RobotStateMessage
 
     RobotMode mode;
     RobotMotion motion;
+    AutonomousBehaviorType autonomousBehavior;
 
-    uint8_t reserved[2];
+    uint8_t reserved;
 };
 
 static_assert(sizeof(RobotStateMessage) == 12);
@@ -24,7 +26,8 @@ static_assert(
 inline RobotStateMessage makeRobotStateMessage(
     uint32_t sequenceNumber,
     RobotMode mode,
-    RobotMotion motion)
+    RobotMotion motion,
+    AutonomousBehaviorType autonomousBehavior)
 {
     return RobotStateMessage
     {
@@ -45,6 +48,7 @@ inline RobotStateMessage makeRobotStateMessage(
 
         .mode = mode,
         .motion = motion,
-        .reserved = {0, 0}
+        .autonomousBehavior = autonomousBehavior,
+        .reserved = 0
     };
 }

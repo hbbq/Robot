@@ -5,7 +5,7 @@
 
 #include "MessageType.h"
 
-inline constexpr uint8_t CommunicationProtocolVersion = 1;
+inline constexpr uint8_t CommunicationProtocolVersion = 2;
 
 struct MessageHeader
 {

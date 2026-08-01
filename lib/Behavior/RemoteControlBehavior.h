@@ -19,6 +19,7 @@ public:
 
     void begin() override;
     void update() override;
+    RobotMode mode() const override;
 
 private:
     RemoteDriveState& _remoteDriveState;

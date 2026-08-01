@@ -4,6 +4,7 @@
 #include <RobotMode.h>
 #include <RobotMotion.h>
 #include <JoystickModel.h>
+#include <AutonomousBehaviorType.h>
 
 class IDisplayDriver;
 class ITouchController;
@@ -45,6 +46,9 @@ private:
     RobotMotion _lastMotion =
         RobotMotion::Stopped;
 
+    AutonomousBehaviorType _lastAutonomousBehavior =
+        AutonomousBehaviorType::RandomDrive;
+
     static constexpr uint32_t DriveSendIntervalMs = 100;
 
     uint32_t _lastDriveSendMs = 0;
@@ -64,6 +68,8 @@ private:
     void drawRemoteContent();
     void drawAutonomousContent();
     void drawDisconnectedContent();
+    void drawAutonomousSelection(
+        int16_t y);
     void drawJoystick();
     void drawModeButton(
         int16_t x,
@@ -107,4 +113,7 @@ private:
 
     const char* motionText(
         RobotMotion motion) const;
+
+    const char* autonomousBehaviorText(
+        AutonomousBehaviorType behavior) const;
 };

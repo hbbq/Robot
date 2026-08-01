@@ -56,3 +56,8 @@ void RemoteControlBehavior::update()
             linear,
             angular);
 }
+
+RobotMode RemoteControlBehavior::mode() const
+{
+    return RobotMode::RemoteControl;
+}

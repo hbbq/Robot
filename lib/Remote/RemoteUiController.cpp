@@ -76,6 +76,9 @@ void RemoteUiController::begin()
     _lastMotion =
         _robotState.motion();
 
+    _lastAutonomousBehavior =
+        _robotState.autonomousBehavior();
+
     _idlePulseStartedMs =
         _clock.millis();
 
@@ -190,9 +193,13 @@ void RemoteUiController::updateState()
     const RobotMotion motion =
         _robotState.motion();
 
+    const AutonomousBehaviorType autonomousBehavior =
+        _robotState.autonomousBehavior();
+
     if (ready == _lastReady &&
         mode == _lastMode &&
-        motion == _lastMotion)
+        motion == _lastMotion &&
+        autonomousBehavior == _lastAutonomousBehavior)
     {
         return;
     }
@@ -200,6 +207,7 @@ void RemoteUiController::updateState()
     _lastReady = ready;
     _lastMode = mode;
     _lastMotion = motion;
+    _lastAutonomousBehavior = autonomousBehavior;
 
     if (mode != RobotMode::RemoteControl &&
         _joystick.active())
@@ -416,10 +424,14 @@ void RemoteUiController::drawIdleContent()
         ContentCenterY + 34,
         1,
         MutedColor);
+
+    drawAutonomousSelection(
+        ContentCenterY + 67);
 }
 
 void RemoteUiController::drawRemoteContent()
 {
+    drawAutonomousSelection(65);
     drawJoystick();
 }
 
@@ -427,9 +439,16 @@ void RemoteUiController::drawAutonomousContent()
 {
     drawCenteredText(
         "AUTONOMOUS",
-        ContentCenterY - 52,
+        ContentCenterY - 66,
         1,
         MutedColor);
+
+    drawCenteredText(
+        autonomousBehaviorText(
+            _robotState.autonomousBehavior()),
+        ContentCenterY - 50,
+        1,
+        AccentColor);
 
     const char* motion =
         motionText(_robotState.motion());
@@ -439,7 +458,7 @@ void RemoteUiController::drawAutonomousContent()
 
     drawCenteredText(
         motion,
-        ContentCenterY - 10,
+        ContentCenterY,
         textSize,
         ForegroundColor);
 }
@@ -451,6 +470,23 @@ void RemoteUiController::drawDisconnectedContent()
         ContentCenterY,
         1,
         MutedColor);
+}
+
+void RemoteUiController::drawAutonomousSelection(
+    int16_t y)
+{
+    drawCenteredText(
+        "SELECTED AUTO",
+        y,
+        1,
+        MutedColor);
+
+    drawCenteredText(
+        autonomousBehaviorText(
+            _robotState.autonomousBehavior()),
+        y + 14,
+        1,
+        AccentColor);
 }
 
 void RemoteUiController::drawModeButton(
@@ -645,6 +681,18 @@ const char* RemoteUiController::motionText(
 
         case RobotMotion::Curve:
             return "Curving";
+    }
+
+    return "?";
+}
+
+const char* RemoteUiController::autonomousBehaviorText(
+    AutonomousBehaviorType behavior) const
+{
+    switch (behavior)
+    {
+        case AutonomousBehaviorType::RandomDrive:
+            return "RANDOM DRIVE";
     }
 
     return "?";

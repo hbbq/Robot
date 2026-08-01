@@ -108,8 +108,6 @@ void RobotApp::begin()
         return;
     }
     
-    _mode = RobotMode::Idle;
-
     _behaviorController.setBehavior(
         _idleBehavior);
 
@@ -175,9 +173,14 @@ void RobotApp::updateRobotState()
     const RobotMotion motion =
         _driveController.getMotion();
 
+    const RobotMode mode =
+        _behaviorController.currentMode();
+
     const bool stateChanged =
-        _mode != _lastSentMode ||
-        motion != _lastSentMotion;
+        mode != _lastSentMode ||
+        motion != _lastSentMotion ||
+        _selectedAutonomousBehavior !=
+            _lastSentAutonomousBehavior;
 
     const bool periodicUpdate =
         nowMs - _lastRobotStateSentMs >=
@@ -190,14 +193,17 @@ void RobotApp::updateRobotState()
     }
 
     if (!_deviceNetwork.sendRobotState(
-            _mode,
-            motion))
+            mode,
+            motion,
+            _selectedAutonomousBehavior))
     {
         return;
     }
 
-    _lastSentMode = _mode;
+    _lastSentMode = mode;
     _lastSentMotion = motion;
+    _lastSentAutonomousBehavior =
+        _selectedAutonomousBehavior;
     _lastRobotStateSentMs = nowMs;
 }
 
@@ -222,7 +228,6 @@ void RobotApp::handleModeRequest()
             _behaviorController.setBehavior(
                 _idleBehavior);
 
-            _mode = RobotMode::Idle;
             break;
 
         case RobotMode::Autonomous:
@@ -234,16 +239,14 @@ void RobotApp::handleModeRequest()
                 _behaviorController.setBehavior(
                     _idleBehavior);
 
-                _mode = RobotMode::Idle;
                 break;
             }
 
             _driveController.stop();
 
             _behaviorController.setBehavior(
-                _randomDriveBehavior);
+                selectedAutonomousBehavior());
 
-            _mode = RobotMode::Autonomous;
             break;
 
         case RobotMode::RemoteControl:
@@ -253,13 +256,23 @@ void RobotApp::handleModeRequest()
             _behaviorController.setBehavior(
                 _remoteControlBehavior);
 
-            _mode = RobotMode::RemoteControl;
             break;
     }
 
     Serial.printf(
         "[Robot] Mode changed: %u\n",
-        static_cast<unsigned>(_mode));
+        static_cast<unsigned>(
+            _behaviorController.currentMode()));
+}
+
+IBehavior& RobotApp::selectedAutonomousBehavior()
+{
+    switch (_selectedAutonomousBehavior)
+    {
+        case AutonomousBehaviorType::RandomDrive:
+        default:
+            return _randomDriveBehavior;
+    }
 }
 
 #endif

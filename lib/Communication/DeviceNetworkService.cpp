@@ -138,7 +138,8 @@ bool DeviceNetworkService::sendHeartbeat()
 
 bool DeviceNetworkService::sendRobotState(
     RobotMode mode,
-    RobotMotion motion)
+    RobotMotion motion,
+    AutonomousBehaviorType autonomousBehavior)
 {
     if (!_started)
     {
@@ -149,7 +150,8 @@ bool DeviceNetworkService::sendRobotState(
         makeRobotStateMessage(
             nextSequenceNumber(),
             mode,
-            motion);
+            motion,
+            autonomousBehavior);
 
     return _espNow.broadcast(
         &message,

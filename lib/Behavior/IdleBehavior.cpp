@@ -16,3 +16,8 @@ void IdleBehavior::begin()
 void IdleBehavior::update()
 {
 }
+
+RobotMode IdleBehavior::mode() const
+{
+    return RobotMode::Idle;
+}

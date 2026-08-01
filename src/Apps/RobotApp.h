@@ -19,6 +19,7 @@
 #include <RobotMotion.h>
 #include <RemoteControlBehavior.h>
 #include <RobotModeRequestStore.h>
+#include <AutonomousBehaviorType.h>
 
 #if defined(USE_FAKE_MOTORS)
 #include <FakeMotorController.h>
@@ -69,9 +70,13 @@ private:
     
     RobotStateStore _robotStateStore;
 
-    RobotMode _mode = RobotMode::Autonomous;
+    AutonomousBehaviorType _selectedAutonomousBehavior =
+        AutonomousBehaviorType::RandomDrive;
+
     RobotMode _lastSentMode = RobotMode::Idle;
     RobotMotion _lastSentMotion = RobotMotion::Stopped;
+    AutonomousBehaviorType _lastSentAutonomousBehavior =
+        AutonomousBehaviorType::RandomDrive;
 
     RobotModeRequestStore _robotModeRequestStore;
 
@@ -82,6 +87,7 @@ private:
     RobotActivity getActivity() const;
     void updateRobotState();
     void handleModeRequest();
+    IBehavior& selectedAutonomousBehavior();
 
     // Senare:
     // MotionController _motion;

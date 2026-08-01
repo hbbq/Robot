@@ -6,6 +6,7 @@
 #include <RobotActivity.h>
 #include <RobotMode.h>
 #include <RobotMotion.h>
+#include <AutonomousBehaviorType.h>
 
 class DeviceRegistry;
 class EspNowManager;
@@ -30,7 +31,8 @@ public:
     bool sendHeartbeat();
     bool sendRobotState(
         RobotMode mode,
-        RobotMotion motion);
+        RobotMotion motion,
+        AutonomousBehaviorType autonomousBehavior);
     bool sendDriveCommand(
         float linear,
         float angular);

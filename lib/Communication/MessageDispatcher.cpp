@@ -212,7 +212,8 @@ void MessageDispatcher::handleRobotState(
     // Robot is authoritative for actual robot state.
     _robotStateStore.setState(
         message->mode,
-        message->motion);
+        message->motion,
+        message->autonomousBehavior);
 }
 
 void MessageDispatcher::handleDriveCommand(

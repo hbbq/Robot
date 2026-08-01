@@ -34,3 +34,10 @@ IBehavior* BehaviorController::currentBehavior() const
 {
     return _currentBehavior;
 }
+
+RobotMode BehaviorController::currentMode() const
+{
+    return _currentBehavior != nullptr
+        ? _currentBehavior->mode()
+        : RobotMode::Idle;
+}
