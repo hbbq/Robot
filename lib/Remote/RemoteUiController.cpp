@@ -8,21 +8,26 @@
 #include <JoystickModel.h>
 #include <IClock.h>
 
+#include <cstring>
+
 namespace
 {
     // Low-saturation RGB565 palette for a calmer control interface.
     constexpr uint16_t BackgroundColor = 0x10A3;
     constexpr uint16_t PanelColor = 0x1905;
-    constexpr uint16_t PanelAltColor = 0x10C4;
     constexpr uint16_t BorderColor = 0x29C8;
     constexpr uint16_t ForegroundColor = 0xDF1D;
     constexpr uint16_t MutedColor = 0x7411;
     constexpr uint16_t AccentColor = 0x5CF5;
     constexpr uint16_t SuccessColor = 0x6CF0;
     constexpr uint16_t WarningColor = 0xBC2E;
+    constexpr uint16_t IdlePulseDimColor = 0x3AD0;
+
+    constexpr int16_t StatusBarHeight = 44;
+    constexpr int16_t ContentCenterY = 139;
 
     constexpr int16_t ButtonY = 244;
-    constexpr int16_t ButtonH = 32;
+    constexpr int16_t ButtonH = 36;
 
     constexpr int16_t IdleButtonX = 7;
     constexpr int16_t IdleButtonW = 70;
@@ -36,6 +41,8 @@ namespace
     constexpr int16_t JoystickRadius = 48;
     constexpr int16_t JoystickCenterX = 120;
     constexpr int16_t JoystickCenterY = 162;
+
+    constexpr uint32_t IdlePulseIntervalMs = 700;
 }
 
 RemoteUiController::RemoteUiController(
@@ -69,6 +76,9 @@ void RemoteUiController::begin()
     _lastMotion =
         _robotState.motion();
 
+    _idlePulseStartedMs =
+        _clock.millis();
+
     _dirty = true;
 
     draw();
@@ -80,6 +90,7 @@ void RemoteUiController::update()
 {
     handleTouch();
     updateState();
+    updateIdleAnimation();
     sendDriveCommand();
 
     if (_dirty)
@@ -190,12 +201,47 @@ void RemoteUiController::updateState()
     _lastMode = mode;
     _lastMotion = motion;
 
+    if (mode != RobotMode::RemoteControl &&
+        _joystick.active())
+    {
+        _joystick.release();
+    }
+
+    if (mode == RobotMode::Idle)
+    {
+        _idlePulseStartedMs = _clock.millis();
+        _idlePulseBright = false;
+    }
+
+    _dirty = true;
+}
+
+void RemoteUiController::updateIdleAnimation()
+{
+    if (!_readiness.isReady() ||
+        _robotState.mode() != RobotMode::Idle)
+    {
+        return;
+    }
+
+    const uint32_t nowMs = _clock.millis();
+
+    if (nowMs - _idlePulseStartedMs <
+        IdlePulseIntervalMs)
+    {
+        return;
+    }
+
+    _idlePulseStartedMs = nowMs;
+    _idlePulseBright = !_idlePulseBright;
     _dirty = true;
 }
 
 void RemoteUiController::sendDriveCommand()
 {
-    if (!_joystick.active())
+    if (!_joystick.active() ||
+        _robotState.mode() !=
+            RobotMode::RemoteControl)
     {
         return;
     }
@@ -224,78 +270,111 @@ void RemoteUiController::requestMode(
 
 void RemoteUiController::draw()
 {
-    const bool ready =
-        _readiness.isReady();
+    _display.clear(BackgroundColor);
 
-    _display.clear(
-        BackgroundColor);
+    drawStatusBar();
 
-    const uint16_t statusDotColor =
-        ready ? SuccessColor : WarningColor;
+    if (!_readiness.isReady())
+    {
+        drawDisconnectedContent();
+    }
+    else
+    {
+        switch (_robotState.mode())
+        {
+            case RobotMode::Idle:
+                drawIdleContent();
+                break;
+
+            case RobotMode::Autonomous:
+                drawAutonomousContent();
+                break;
+
+            case RobotMode::RemoteControl:
+                drawRemoteContent();
+                break;
+        }
+    }
+
+    drawModeControls();
+
+    _display.flush();
+}
+
+void RemoteUiController::drawStatusBar()
+{
+    const bool ready = _readiness.isReady();
 
     _display.fillRect(
-        8,
-        8,
-        224,
-        30,
+        0,
+        0,
+        _display.width(),
+        StatusBarHeight,
         PanelColor);
 
-    _display.drawRect(
-        8,
-        8,
-        224,
-        30,
+    _display.fillRect(
+        0,
+        StatusBarHeight - 1,
+        _display.width(),
+        1,
         BorderColor);
 
-    _display.fillCircle(
-        20,
-        23,
-        4,
-        statusDotColor);
+    if (!ready)
+    {
+        drawCenteredText(
+            "DISCONNECTED",
+            15,
+            2,
+            WarningColor);
+        return;
+    }
 
-    _display.setTextColor(
-        MutedColor);
+    const char* mode =
+        modeText(_robotState.mode());
+
+    const char* motion =
+        motionText(_robotState.motion());
+
+    constexpr int16_t SeparatorWidth = 14;
+
+    const int16_t modeWidth =
+        static_cast<int16_t>(std::strlen(mode) * 6);
+
+    const int16_t motionWidth =
+        static_cast<int16_t>(std::strlen(motion) * 6);
+
+    const int16_t startX =
+        (_display.width() -
+         modeWidth - SeparatorWidth - motionWidth) / 2;
+
     _display.setTextSize(1);
-    _display.setCursor(31, 18);
-    _display.print("ROBOT");
+    _display.setTextColor(ForegroundColor);
+    _display.setCursor(startX, 18);
+    _display.print(mode);
 
-    _display.setTextColor(
-        ForegroundColor);
+    const int16_t separatorX =
+        startX + modeWidth + SeparatorWidth / 2;
+
+    _display.fillCircle(
+        separatorX,
+        21,
+        2,
+        AccentColor);
+
     _display.setCursor(
-        ready ? 181 : 175,
+        startX + modeWidth + SeparatorWidth,
         18);
-    _display.print(
-        ready ? "ONLINE" : "OFFLINE");
+    _display.print(motion);
+}
 
+void RemoteUiController::drawModeControls()
+{
     _display.fillRect(
-        8,
-        46,
-        224,
-        52,
-        PanelColor);
-
-    _display.setTextColor(
-        ForegroundColor);
-    _display.setCursor(18, 56);
-    _display.print("MODE: ");
-    _display.print(
-        modeText(
-            _robotState.mode()));
-
-    _display.setCursor(18, 74);
-    _display.print("MOTION: ");
-    _display.print(
-        motionText(
-            _robotState.motion()));
-
-    _display.fillRect(
-        8,
-        108,
-        224,
-        122,
-        PanelAltColor);
-
-    drawJoystick();
+        0,
+        ButtonY,
+        _display.width(),
+        1,
+        BorderColor);
 
     drawModeButton(
         IdleButtonX,
@@ -303,8 +382,7 @@ void RemoteUiController::draw()
         IdleButtonW,
         ButtonH,
         "IDLE",
-        _robotState.mode() ==
-            RobotMode::Idle);
+        _robotState.mode() == RobotMode::Idle);
 
     drawModeButton(
         AutoButtonX,
@@ -312,8 +390,7 @@ void RemoteUiController::draw()
         AutoButtonW,
         ButtonH,
         "AUTO",
-        _robotState.mode() ==
-            RobotMode::Autonomous);
+        _robotState.mode() == RobotMode::Autonomous);
 
     drawModeButton(
         RemoteButtonX,
@@ -321,10 +398,59 @@ void RemoteUiController::draw()
         RemoteButtonW,
         ButtonH,
         "REMOTE",
-        _robotState.mode() ==
-            RobotMode::RemoteControl);
+        _robotState.mode() == RobotMode::RemoteControl);
+}
 
-    _display.flush();
+void RemoteUiController::drawIdleContent()
+{
+    drawCenteredText(
+        "Zzz",
+        ContentCenterY - 24,
+        4,
+        _idlePulseBright
+            ? AccentColor
+            : IdlePulseDimColor);
+
+    drawCenteredText(
+        "sleeping",
+        ContentCenterY + 34,
+        1,
+        MutedColor);
+}
+
+void RemoteUiController::drawRemoteContent()
+{
+    drawJoystick();
+}
+
+void RemoteUiController::drawAutonomousContent()
+{
+    drawCenteredText(
+        "AUTONOMOUS",
+        ContentCenterY - 52,
+        1,
+        MutedColor);
+
+    const char* motion =
+        motionText(_robotState.motion());
+
+    const uint8_t textSize =
+        std::strlen(motion) > 10 ? 2 : 3;
+
+    drawCenteredText(
+        motion,
+        ContentCenterY - 10,
+        textSize,
+        ForegroundColor);
+}
+
+void RemoteUiController::drawDisconnectedContent()
+{
+    drawCenteredText(
+        "Waiting for robot",
+        ContentCenterY,
+        1,
+        MutedColor);
 }
 
 void RemoteUiController::drawModeButton(
@@ -335,41 +461,46 @@ void RemoteUiController::drawModeButton(
     const char* text,
     bool selected)
 {
+    _display.setTextSize(1);
+    _display.setTextColor(
+        selected ? ForegroundColor : MutedColor);
+
+    const int16_t textWidth =
+        static_cast<int16_t>(
+            std::strlen(text) * 6);
+
+    _display.setCursor(
+        x + (width - textWidth) / 2,
+        y + 12);
+    _display.print(text);
+
     if (selected)
     {
         _display.fillRect(
-            x,
-            y,
-            width,
-            height,
+            x + 12,
+            y + height - 5,
+            width - 24,
+            2,
             AccentColor);
-
-        _display.setTextColor(
-            BackgroundColor);
     }
-    else
-    {
-        _display.fillRect(
-            x,
-            y,
-            width,
-            height,
-            PanelColor);
+}
 
-        _display.drawRect(
-            x,
-            y,
-            width,
-            height,
-            BorderColor);
+void RemoteUiController::drawCenteredText(
+    const char* text,
+    int16_t y,
+    uint8_t textSize,
+    uint16_t color)
+{
+    const int16_t textWidth =
+        static_cast<int16_t>(
+            std::strlen(text) *
+            6 * textSize);
 
-        _display.setTextColor(
-            ForegroundColor);
-    }
-
+    _display.setTextSize(textSize);
+    _display.setTextColor(color);
     _display.setCursor(
-        x + 11,
-        y + 11);
+        (_display.width() - textWidth) / 2,
+        y);
     _display.print(text);
 }
 
@@ -384,19 +515,17 @@ void RemoteUiController::drawJoystick()
     const int16_t radius =
         _joystick.radius();
 
-    _display.drawRect(
-        centerX - radius,
-        centerY - radius,
-        radius * 2,
-        radius * 2,
+    _display.drawCircle(
+        centerX,
+        centerY,
+        radius,
         BorderColor);
 
-    _display.fillRect(
-        centerX - radius + 4,
-        centerY - radius + 4,
-        (radius * 2) - 8,
-        (radius * 2) - 8,
-        PanelColor);
+    _display.drawCircle(
+        centerX,
+        centerY,
+        radius - 1,
+        BorderColor);
 
     _display.drawLine(
         centerX,
@@ -412,23 +541,17 @@ void RemoteUiController::drawJoystick()
         centerY,
         MutedColor);
 
-    if (_robotState.mode() ==
-        RobotMode::RemoteControl)
-    {
-        _display.fillCircle(
-            _joystick.knobX(),
-            _joystick.knobY(),
-            15,
-            AccentColor);
-    }
-    else
-    {
-        _display.fillCircle(
-            centerX,
-            centerY,
-            9,
-            ForegroundColor);
-    }
+    _display.fillCircle(
+        _joystick.knobX(),
+        _joystick.knobY(),
+        15,
+        AccentColor);
+
+    _display.fillCircle(
+        _joystick.knobX(),
+        _joystick.knobY(),
+        4,
+        ForegroundColor);
 }
 
 bool RemoteUiController::isInside(

@@ -49,11 +49,21 @@ private:
 
     uint32_t _lastDriveSendMs = 0;
 
+    uint32_t _idlePulseStartedMs = 0;
+    bool _idlePulseBright = false;
+
     void handleTouch();
     void updateState();
+    void updateIdleAnimation();
     void sendDriveCommand();
 
     void draw();
+    void drawStatusBar();
+    void drawModeControls();
+    void drawIdleContent();
+    void drawRemoteContent();
+    void drawAutonomousContent();
+    void drawDisconnectedContent();
     void drawJoystick();
     void drawModeButton(
         int16_t x,
@@ -62,6 +72,12 @@ private:
         int16_t height,
         const char* text,
         bool selected);
+
+    void drawCenteredText(
+        const char* text,
+        int16_t y,
+        uint8_t textSize,
+        uint16_t color);
 
     void requestMode(
         RobotMode mode);
