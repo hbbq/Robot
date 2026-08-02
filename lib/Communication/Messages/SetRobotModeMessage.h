@@ -15,12 +15,15 @@ struct SetRobotModeMessage
     uint8_t reserved[3];
 };
 
+static_assert(sizeof(SetRobotModeMessage) == 16);
+
 static_assert(
     std::is_trivially_copyable_v<SetRobotModeMessage>
 );
 
 inline SetRobotModeMessage makeSetRobotModeMessage(
     uint32_t sequenceNumber,
+    RobotId robotId,
     RobotMode mode)
 {
     return SetRobotModeMessage
@@ -37,7 +40,9 @@ inline SetRobotModeMessage makeSetRobotModeMessage(
                 sizeof(SetRobotModeMessage),
 
             .sequenceNumber =
-                sequenceNumber
+                sequenceNumber,
+
+            .robotId = robotId
         },
 
         .mode = mode,

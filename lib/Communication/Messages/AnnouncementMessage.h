@@ -18,11 +18,12 @@ struct AnnouncementMessage
     Capability capabilities;
 };
 
-static_assert(sizeof(AnnouncementMessage) == 16);
+static_assert(sizeof(AnnouncementMessage) == 20);
 static_assert(std::is_trivially_copyable_v<AnnouncementMessage>);
 
 inline AnnouncementMessage makeAnnouncementMessage(
     uint32_t sequenceNumber,
+    RobotId robotId,
     DeviceType deviceType,
     Capability capabilities)
 {
@@ -33,7 +34,8 @@ inline AnnouncementMessage makeAnnouncementMessage(
             .protocolVersion = CommunicationProtocolVersion,
             .type = MessageType::Announcement,
             .messageLength = sizeof(AnnouncementMessage),
-            .sequenceNumber = sequenceNumber
+            .sequenceNumber = sequenceNumber,
+            .robotId = robotId
         },
         .deviceType = deviceType,
         .reserved = {0, 0, 0},

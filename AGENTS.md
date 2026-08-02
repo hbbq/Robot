@@ -749,3 +749,25 @@ Build environments separately when necessary to avoid truncated output:
     pio.exe run -e remote
 
 After changes to shared code, verify all three environments.
+
+
+## Robot/System identity
+
+Every cooperating device belongs to one `RobotId`.
+
+Current operational ESP-NOW traffic is isolated by RobotId:
+
+1. protocol/header validation
+2. RobotId validation
+3. sender MAC/role validation
+4. message-specific handling
+
+Devices from another RobotId must not:
+- enter the active DeviceRegistry
+- satisfy readiness
+- become trusted command sources
+- affect RobotState or mode/behavior selection
+
+For now, Robot, Display and Remote are statically configured to one RobotId.
+
+Future multi-robot discovery should use a separate discovery mechanism/collection rather than weakening the active operational registry.

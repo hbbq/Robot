@@ -5,6 +5,7 @@
 
 #include <Capability.h>
 #include <DeviceType.h>
+#include <RobotId.h>
 
 class DeviceInfo
 {
@@ -13,6 +14,7 @@ public:
 
     DeviceInfo(
         const uint8_t macAddress[6],
+        RobotId robotId,
         DeviceType deviceType,
         Capability capabilities,
         int8_t rssi,
@@ -34,6 +36,7 @@ public:
 
     const std::array<uint8_t, 6>& macAddress() const;
 
+    RobotId robotId() const;
     DeviceType deviceType() const;
     Capability capabilities() const;
 
@@ -53,6 +56,7 @@ private:
 
     std::array<uint8_t, 6> _macAddress{};
 
+    RobotId _robotId = 0;
     DeviceType _deviceType = DeviceType::Unknown;
     Capability _capabilities = Capability::None;
 

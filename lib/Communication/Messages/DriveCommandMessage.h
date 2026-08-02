@@ -13,12 +13,15 @@ struct DriveCommandMessage
     float angular;
 };
 
+static_assert(sizeof(DriveCommandMessage) == 20);
+
 static_assert(
     std::is_trivially_copyable_v<DriveCommandMessage>
 );
 
 inline DriveCommandMessage makeDriveCommandMessage(
     uint32_t sequenceNumber,
+    RobotId robotId,
     float linear,
     float angular)
 {
@@ -36,7 +39,9 @@ inline DriveCommandMessage makeDriveCommandMessage(
                 sizeof(DriveCommandMessage),
 
             .sequenceNumber =
-                sequenceNumber
+                sequenceNumber,
+
+            .robotId = robotId
         },
 
         .linear = linear,

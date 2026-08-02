@@ -7,7 +7,10 @@
 #include "../AppConfig.h"
 
 DisplayApp::DisplayApp()
-    : _display(1),
+    : _deviceRegistry(
+          AppConfig::SystemRobotId),
+
+      _display(1),
 
       _brightnessController(
           _display,

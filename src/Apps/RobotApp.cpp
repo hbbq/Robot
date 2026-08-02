@@ -13,6 +13,9 @@ RobotApp::RobotApp()
           _clock,
           AppConfig::WallClockTime),
 
+      _deviceRegistry(
+          AppConfig::SystemRobotId),
+
       _messageDispatcher(
           _deviceRegistry,
           _robotStateStore,

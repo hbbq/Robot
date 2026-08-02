@@ -19,12 +19,13 @@ struct RobotStateMessage
     uint8_t reserved;
 };
 
-static_assert(sizeof(RobotStateMessage) == 12);
+static_assert(sizeof(RobotStateMessage) == 16);
 static_assert(
     std::is_trivially_copyable_v<RobotStateMessage>);
 
 inline RobotStateMessage makeRobotStateMessage(
     uint32_t sequenceNumber,
+    RobotId robotId,
     RobotMode mode,
     RobotMotion motion,
     AutonomousBehaviorType autonomousBehavior)
@@ -43,7 +44,9 @@ inline RobotStateMessage makeRobotStateMessage(
                 sizeof(RobotStateMessage),
 
             .sequenceNumber =
-                sequenceNumber
+                sequenceNumber,
+
+            .robotId = robotId
         },
 
         .mode = mode,

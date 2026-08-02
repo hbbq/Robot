@@ -5,7 +5,10 @@
 #include "../AppConfig.h"
 
 RemoteApp::RemoteApp()
-    : _messageDispatcher(
+    : _deviceRegistry(
+          AppConfig::SystemRobotId),
+
+      _messageDispatcher(
         _deviceRegistry,
         _robotStateStore,
         _remoteDriveState,

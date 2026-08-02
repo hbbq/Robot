@@ -96,6 +96,7 @@ bool DeviceNetworkService::sendAnnouncement()
     const AnnouncementMessage message =
         makeAnnouncementMessage(
             nextSequenceNumber(),
+            _config.robotId,
             _config.deviceType,
             _config.capabilities);
 
@@ -123,6 +124,7 @@ bool DeviceNetworkService::sendHeartbeat()
     const HeartbeatMessage message =
         makeHeartbeatMessage(
             nextSequenceNumber(),
+            _config.robotId,
             nowMs);
 
     const bool queued = _espNow.broadcast(
@@ -150,6 +152,7 @@ bool DeviceNetworkService::sendRobotState(
     const RobotStateMessage message =
         makeRobotStateMessage(
             nextSequenceNumber(),
+            _config.robotId,
             mode,
             motion,
             autonomousBehavior);
@@ -183,6 +186,7 @@ bool DeviceNetworkService::sendDriveCommand(
     const DriveCommandMessage message =
         makeDriveCommandMessage(
             nextSequenceNumber(),
+            _config.robotId,
             linear,
             angular);
 
@@ -202,6 +206,7 @@ bool DeviceNetworkService::sendSetRobotMode(
     const auto message =
         makeSetRobotModeMessage(
             nextSequenceNumber(),
+            _config.robotId,
             mode);
 
     return _espNow.broadcast(
@@ -220,6 +225,7 @@ bool DeviceNetworkService::sendSetAutonomousBehavior(
     const auto message =
         makeSetAutonomousBehaviorMessage(
             nextSequenceNumber(),
+            _config.robotId,
             behavior);
 
     return _espNow.broadcast(

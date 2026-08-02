@@ -4,8 +4,9 @@
 #include <type_traits>
 
 #include "MessageType.h"
+#include <RobotId.h>
 
-inline constexpr uint8_t CommunicationProtocolVersion = 2;
+inline constexpr uint8_t CommunicationProtocolVersion = 3;
 
 struct MessageHeader
 {
@@ -13,7 +14,8 @@ struct MessageHeader
     MessageType type;
     uint16_t messageLength;
     uint32_t sequenceNumber;
+    RobotId robotId;
 };
 
-static_assert(sizeof(MessageHeader) == 8);
+static_assert(sizeof(MessageHeader) == 12);
 static_assert(std::is_trivially_copyable_v<MessageHeader>);

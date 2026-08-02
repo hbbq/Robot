@@ -34,7 +34,9 @@ namespace
             return false;
         }
 
-        return device->deviceType() == expectedType;
+        return
+            device->robotId() == registry.robotId() &&
+            device->deviceType() == expectedType;
     }
 }
 
@@ -82,6 +84,11 @@ void MessageDispatcher::onReceive(
     }
 
     if (header.messageLength != size)
+    {
+        return;
+    }
+
+    if (header.robotId != _deviceRegistry.robotId())
     {
         return;
     }
@@ -160,6 +167,7 @@ void MessageDispatcher::handleAnnouncement(
 
     _deviceRegistry.updateDevice(
         senderMac,
+        message->header.robotId,
         message->deviceType,
         message->capabilities,
         rssi,

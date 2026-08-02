@@ -24,6 +24,8 @@ namespace AppConfig
 
     #ifdef DEVICE_ROBOT
 
+        inline constexpr RobotId SystemRobotId = 1;
+
         inline constexpr WifiConnectionConfig InternetWifi
         {
             .ssid = LocalSecrets::WifiSsid,
@@ -48,6 +50,7 @@ namespace AppConfig
 
             .network =
             {
+                .robotId = SystemRobotId,
                 .deviceType = DeviceType::Robot,
 
                 .capabilities =
@@ -116,6 +119,8 @@ namespace AppConfig
 
     #elifdef DEVICE_DISPLAY
 
+        inline constexpr RobotId SystemRobotId = 1;
+
         inline constexpr BrightnessControllerConfig DisplayBrightness
         {
             .minimumPercent = 1,
@@ -129,6 +134,7 @@ namespace AppConfig
 
             .network =
             {
+                .robotId = SystemRobotId,
                 .deviceType = DeviceType::Display,
 
                 .capabilities =
@@ -161,12 +167,15 @@ namespace AppConfig
 
     #elifdef DEVICE_REMOTE
 
+        inline constexpr RobotId SystemRobotId = 1;
+
         inline constexpr CommunicationConfig Communication
         {
             .wifiChannel = WifiChannel,
 
             .network =
             {
+                .robotId = SystemRobotId,
                 .deviceType = DeviceType::Remote,
 
                 .capabilities =

@@ -4,11 +4,14 @@
 
 DeviceInfo::DeviceInfo(
     const uint8_t macAddress[6],
+    RobotId robotId,
     DeviceType deviceType,
     Capability capabilities,
     int8_t rssi,
     uint32_t nowMs)
 {
+    _robotId = robotId;
+
     if (macAddress != nullptr)
     {
         std::copy_n(
@@ -120,4 +123,9 @@ bool DeviceInfo::isExpired(
     uint32_t timeoutMs) const
 {
     return nowMs - _lastSeenMs > timeoutMs;
+}
+
+RobotId DeviceInfo::robotId() const
+{
+    return _robotId;
 }

@@ -11,14 +11,18 @@
 #include <Capability.h>
 #include <DeviceInfo.h>
 #include <DeviceType.h>
+#include <RobotId.h>
 
 class DeviceRegistry
 {
 public:
     static constexpr size_t MaxDevices = 10;
 
+    explicit DeviceRegistry(RobotId robotId);
+
     bool updateDevice(
         const uint8_t macAddress[6],
+        RobotId robotId,
         DeviceType deviceType,
         Capability capabilities,
         int8_t rssi,
@@ -59,12 +63,15 @@ public:
 
     size_t count() const;
 
+    RobotId robotId() const;
+
 private:
     int findDeviceIndexUnsafe(
         const uint8_t macAddress[6]) const;
 
     std::array<DeviceInfo, MaxDevices> _devices{};
     size_t _deviceCount = 0;
+    RobotId _robotId;
 
     mutable portMUX_TYPE _mutex =
         portMUX_INITIALIZER_UNLOCKED;

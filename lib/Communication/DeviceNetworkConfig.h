@@ -4,9 +4,11 @@
 
 #include <Capability.h>
 #include <DeviceType.h>
+#include <RobotId.h>
 
 struct DeviceNetworkConfig
 {
+    RobotId robotId;
     DeviceType deviceType;
     Capability capabilities;
 

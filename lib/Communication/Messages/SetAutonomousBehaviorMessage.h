@@ -13,13 +13,14 @@ struct SetAutonomousBehaviorMessage
     uint8_t reserved[3];
 };
 
-static_assert(sizeof(SetAutonomousBehaviorMessage) == 12);
+static_assert(sizeof(SetAutonomousBehaviorMessage) == 16);
 static_assert(
     std::is_trivially_copyable_v<SetAutonomousBehaviorMessage>);
 
 inline SetAutonomousBehaviorMessage
 makeSetAutonomousBehaviorMessage(
     uint32_t sequenceNumber,
+    RobotId robotId,
     AutonomousBehaviorType behavior)
 {
     return SetAutonomousBehaviorMessage
@@ -29,7 +30,8 @@ makeSetAutonomousBehaviorMessage(
             .protocolVersion = CommunicationProtocolVersion,
             .type = MessageType::SetAutonomousBehavior,
             .messageLength = sizeof(SetAutonomousBehaviorMessage),
-            .sequenceNumber = sequenceNumber
+            .sequenceNumber = sequenceNumber,
+            .robotId = robotId
         },
         .behavior = behavior,
         .reserved = {0, 0, 0}

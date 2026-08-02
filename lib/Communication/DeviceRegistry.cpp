@@ -3,14 +3,20 @@
 #include <algorithm>
 #include <cstring>
 
+DeviceRegistry::DeviceRegistry(RobotId robotId)
+    : _robotId(robotId)
+{
+}
+
 bool DeviceRegistry::updateDevice(
     const uint8_t macAddress[6],
+    RobotId robotId,
     DeviceType deviceType,
     Capability capabilities,
     int8_t rssi,
     uint32_t nowMs)
 {
-    if (macAddress == nullptr)
+    if (macAddress == nullptr || robotId != _robotId)
     {
         return false;
     }
@@ -33,6 +39,7 @@ bool DeviceRegistry::updateDevice(
 
         _devices[index] = DeviceInfo(
             macAddress,
+            robotId,
             deviceType,
             capabilities,
             rssi,
@@ -319,4 +326,9 @@ int DeviceRegistry::findDeviceIndexUnsafe(
     }
 
     return -1;
+}
+
+RobotId DeviceRegistry::robotId() const
+{
+    return _robotId;
 }

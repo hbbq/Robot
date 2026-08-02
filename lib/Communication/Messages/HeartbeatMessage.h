@@ -13,7 +13,7 @@ struct HeartbeatMessage
 };
 
 static_assert(
-    sizeof(HeartbeatMessage) == 12
+    sizeof(HeartbeatMessage) == 16
 );
 
 static_assert(
@@ -22,6 +22,7 @@ static_assert(
 
 inline HeartbeatMessage makeHeartbeatMessage(
     uint32_t sequenceNumber,
+    RobotId robotId,
     uint32_t uptimeMs)
 {
     return HeartbeatMessage
@@ -38,7 +39,9 @@ inline HeartbeatMessage makeHeartbeatMessage(
                 sizeof(HeartbeatMessage),
 
             .sequenceNumber =
-                sequenceNumber
+                sequenceNumber,
+
+            .robotId = robotId
         },
 
         .uptimeMs = uptimeMs
