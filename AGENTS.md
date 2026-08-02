@@ -771,3 +771,45 @@ Devices from another RobotId must not:
 For now, Robot, Display and Remote are statically configured to one RobotId.
 
 Future multi-robot discovery should use a separate discovery mechanism/collection rather than weakening the active operational registry.
+
+## Configuration boundaries
+
+Distinguish between three kinds of constants/configuration:
+
+1. Hardware configuration
+   - GPIO pins
+   - polarity
+   - bus selection
+   - PWM hardware parameters
+   - hardware-specific electrical settings
+
+2. Runtime / behavior tuning
+   - timeouts
+   - probabilities
+   - speeds
+   - thresholds
+   - animation periods
+   - brightness policy
+   - retry/snapshot intervals
+
+3. Implementation constants
+   - protocol constants
+   - fixed geometry/layout
+   - algorithm tolerances
+   - choreography or data intrinsic to a specific implementation
+   - mathematical constants
+
+Do not move a value into configuration merely because it is currently hardcoded.
+
+Prefer focused configuration types owned by the subsystem they configure.
+
+`AppConfig` should instantiate and compose those subsystem configuration types for each application/device. It should not become one giant struct containing every constant in the program.
+
+Keep hardware configuration separate from runtime/behavior tuning even when both are used by the same controller.
+
+For example, an LED may have:
+
+- hardware configuration: pin, polarity, PWM frequency/resolution;
+- animation configuration: blink periods, pulse timing, brightness range.
+
+These concepts should remain distinct rather than being combined simply because `LedController` uses both.
