@@ -87,7 +87,9 @@ void WaveshareEsp32C6TouchLcd147DisplayDriver::begin()
     clear(0x0000);
     flush();
     
-    setBrightness(50);
+    // Keep the backlight off until application policy has selected a
+    // safe initial brightness.
+    setBrightness(0);
 }
 
 void WaveshareEsp32C6TouchLcd147DisplayDriver::flush()

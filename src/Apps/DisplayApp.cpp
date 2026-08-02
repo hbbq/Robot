@@ -9,6 +9,11 @@
 DisplayApp::DisplayApp()
     : _display(1),
 
+      _brightnessController(
+          _display,
+          _clock,
+          AppConfig::DisplayBrightness),
+
       _faceController(
           _display,
           _clock,
@@ -51,7 +56,7 @@ void DisplayApp::begin()
     _readiness.begin();
     
     _display.begin();
-    _display.setBrightness(50);
+    _brightnessController.begin();
     _faceController.begin();
 
     if (!_deviceNetwork.begin())
@@ -64,6 +69,13 @@ void DisplayApp::update()
 {
     _deviceNetwork.update();
     _readiness.update();
+
+    const bool displayActive =
+        _readiness.isReady() &&
+        _robotStateStore.mode() != RobotMode::Idle;
+
+    _brightnessController.setActive(displayActive);
+    _brightnessController.update();
 
     _faceController.update(
         _readiness.isReady(),

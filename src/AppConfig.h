@@ -8,6 +8,7 @@
 #include <Vl53l0xDistanceSensorConfig.h>
 #include <RandomDriveBehaviorConfig.h>
 #include <ExploreBehaviorConfig.h>
+#include <BrightnessControllerConfig.h>
 
 namespace AppConfig
 {
@@ -88,6 +89,13 @@ namespace AppConfig
         };
 
     #elifdef DEVICE_DISPLAY
+
+        inline constexpr BrightnessControllerConfig DisplayBrightness
+        {
+            .minimumPercent = 1,
+            .maximumPercent = 50,
+            .fadeDurationMs = 1500
+        };
 
         inline constexpr CommunicationConfig Communication
         {
