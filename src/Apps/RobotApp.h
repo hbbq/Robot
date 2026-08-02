@@ -23,6 +23,8 @@
 #include <AutonomousBehaviorRequestStore.h>
 #include <ExploreBehavior.h>
 #include <DanceBehavior.h>
+#include <WifiConnectionService.h>
+#include <NtpTimeService.h>
 
 #if defined(USE_FAKE_MOTORS)
 #include <FakeMotorController.h>
@@ -50,6 +52,8 @@ public:
 
 private:
     ArduinoClock _clock;
+    WifiConnectionService _wifiConnection;
+    NtpTimeService _timeService;
 
     DeviceRegistry _deviceRegistry;
     RemoteDriveState _remoteDriveState;

@@ -9,12 +9,38 @@
 #include <RandomDriveBehaviorConfig.h>
 #include <ExploreBehaviorConfig.h>
 #include <BrightnessControllerConfig.h>
+#include <WifiConnectionConfig.h>
+#include <NtpTimeServiceConfig.h>
+
+#if __has_include("LocalSecrets.h")
+    #include "LocalSecrets.h"
+#else
+    #include "LocalSecretsFallback.h"
+#endif
 
 namespace AppConfig
 {
-    inline constexpr uint8_t WifiChannel = 6;
+    inline constexpr uint8_t WifiChannel = 3;
 
     #ifdef DEVICE_ROBOT
+
+        inline constexpr WifiConnectionConfig InternetWifi
+        {
+            .ssid = LocalSecrets::WifiSsid,
+            .password = LocalSecrets::WifiPassword,
+            .expectedChannel = WifiChannel,
+            .reconnectIntervalMs = 30000
+        };
+
+        // Sweden: CET in winter and CEST in summer.
+        inline constexpr NtpTimeServiceConfig WallClockTime
+        {
+            .timezone = "CET-1CEST,M3.5.0,M10.5.0/3",
+            .primaryServer = "pool.ntp.org",
+            .secondaryServer = "time.cloudflare.com",
+            .synchronizationCheckIntervalMs = 1000,
+            .resyncIntervalMs = 21600000
+        };
 
         inline constexpr CommunicationConfig Communication
         {

@@ -5,7 +5,15 @@
 #include "../AppConfig.h"
 
 RobotApp::RobotApp()
-    : _messageDispatcher(
+    : _wifiConnection(
+          _clock,
+          AppConfig::InternetWifi),
+
+      _timeService(
+          _clock,
+          AppConfig::WallClockTime),
+
+      _messageDispatcher(
           _deviceRegistry,
           _robotStateStore,
           _remoteDriveState,
@@ -118,6 +126,9 @@ void RobotApp::begin()
         Serial.println("Network initialization failed");
         return;
     }
+
+    _wifiConnection.begin();
+    _timeService.begin();
     
     _behaviorController.setBehavior(
         _idleBehavior);
@@ -128,6 +139,9 @@ void RobotApp::begin()
 void RobotApp::update()
 {
     _deviceNetwork.update();
+    _wifiConnection.update();
+    _timeService.update(
+        _wifiConnection.isConnected());
 
     _readiness.update();
 
