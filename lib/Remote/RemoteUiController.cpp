@@ -43,8 +43,6 @@ namespace
     constexpr int16_t JoystickCenterY = 162;
 
     constexpr uint32_t IdlePulseIntervalMs = 700;
-    constexpr uint32_t SelectionTouchReleaseMs = 150;
-
     constexpr int16_t BehaviorControlY = 70;
     constexpr int16_t BehaviorControlH = 55;
     constexpr int16_t PreviousBehaviorControlX = 12;
@@ -58,17 +56,23 @@ RemoteUiController::RemoteUiController(
     DeviceNetworkService& network,
     RobotStateStore& robotState,
     ReadinessController& readiness,
-    IClock& clock)
+    IClock& clock,
+    const JoystickConfig& joystickConfig,
+    const DriveCommandTransmissionConfig& transmissionConfig,
+    const RemoteUiConfig& uiConfig)
     : _display(display),
       _touch(touch),
       _network(network),
       _robotState(robotState),
       _readiness(readiness),
       _clock(clock),
+      _transmissionConfig(transmissionConfig),
+      _uiConfig(uiConfig),
       _joystick(
           JoystickCenterX,
           JoystickCenterY,
-          JoystickRadius)
+          JoystickRadius,
+          joystickConfig)
 {
 }
 
@@ -136,7 +140,7 @@ void RemoteUiController::handleTouch()
     {
         if (_autonomousSelectionTouchActive &&
             nowMs - _lastAutonomousSelectionTouchMs >=
-                SelectionTouchReleaseMs)
+                _uiConfig.selectionReleaseMs)
         {
             _autonomousSelectionTouchActive = false;
         }
@@ -308,7 +312,7 @@ void RemoteUiController::sendDriveCommand()
         _clock.millis();
 
     if (nowMs - _lastDriveSendMs <
-        DriveSendIntervalMs)
+        _transmissionConfig.sendIntervalMs)
     {
         return;
     }

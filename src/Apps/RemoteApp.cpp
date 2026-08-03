@@ -38,7 +38,10 @@ RemoteApp::RemoteApp()
           _deviceNetwork,
           _robotStateStore,
           _readiness,
-          _clock)
+          _clock,
+          AppConfig::Joystick,
+          AppConfig::DriveTransmission,
+          AppConfig::RemoteUi)
 {
 }
 
@@ -48,7 +51,8 @@ void RemoteApp::begin()
     delay(1000);
 
     _display.begin();
-    _display.setBrightness(50);
+    _display.setBrightness(
+        AppConfig::RemoteBrightness.percentage);
     
     if (!_touch.begin())
     {

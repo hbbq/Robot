@@ -20,6 +20,13 @@ namespace
 
     constexpr RandomDriveBehaviorConfig BehaviorConfig
     {
+        .forwardChancePercent = 70,
+        .minimumWaitMs = 500,
+        .maximumWaitMs = 2000,
+        .minimumForwardDistanceMeters = 0.2f,
+        .maximumForwardDistanceMeters = 1.0f,
+        .minimumTurnDegrees = 30.0f,
+        .maximumTurnDegrees = 150.0f,
         .obstacleThresholdMillimeters = 250,
         .backupDistanceMeters = 0.1f,
         .minimumAvoidanceTurnDegrees = 60.0f,

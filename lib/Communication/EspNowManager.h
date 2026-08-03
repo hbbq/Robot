@@ -10,7 +10,7 @@ class EspNowManager
 public:
     explicit EspNowManager(
         IEspNowReceiver& receiver,
-        uint8_t wifiChannel = 6);
+        uint8_t wifiChannel);
 
     ~EspNowManager();
 

@@ -41,7 +41,8 @@ DisplayApp::DisplayApp()
           AppConfig::Communication.network),
 
       _statusLed(
-          AppConfig::StatusLed),
+          AppConfig::StatusLedHardware,
+          AppConfig::StatusLedAnimation),
 
       _readiness(
           _deviceRegistry,

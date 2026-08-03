@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <JoystickConfig.h>
 
 class JoystickModel
 {
@@ -9,7 +10,7 @@ public:
         int16_t centerX,
         int16_t centerY,
         int16_t radius,
-        float deadZone = 0.12f);
+        const JoystickConfig& config);
 
     void setTouch(
         int16_t x,

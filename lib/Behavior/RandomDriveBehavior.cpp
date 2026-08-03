@@ -33,7 +33,8 @@ void RandomDriveBehavior::update()
             if (_clock.millis() - _waitStartedMs >=
                 _waitDurationMs)
             {
-                if (_random.next(0, 100) < 70)
+                if (_random.next(0, 100) <
+                    _config.forwardChancePercent)
                 {
                     startForward();
                 }
@@ -79,7 +80,9 @@ RobotMode RandomDriveBehavior::mode() const
 void RandomDriveBehavior::startWaiting()
 {
     _state = State::Waiting;
-    _waitDurationMs = _random.next(500, 2000);
+    _waitDurationMs = _random.next(
+        _config.minimumWaitMs,
+        _config.maximumWaitMs);
     _waitStartedMs = _clock.millis();
 }
 
@@ -94,7 +97,9 @@ void RandomDriveBehavior::startForward()
     _sensorReadingLost = false;
 
     const float meters =
-        _random.nextFloat(0.2f, 1.0f);
+        _random.nextFloat(
+            _config.minimumForwardDistanceMeters,
+            _config.maximumForwardDistanceMeters);
 
     _motionController.goForward(meters);
 }
@@ -104,7 +109,9 @@ void RandomDriveBehavior::startTurn()
     _state = State::Turning;
 
     float degrees =
-        _random.nextFloat(30.0f, 150.0f);
+        _random.nextFloat(
+            _config.minimumTurnDegrees,
+            _config.maximumTurnDegrees);
 
     if (_random.next(0, 2) == 0)
     {

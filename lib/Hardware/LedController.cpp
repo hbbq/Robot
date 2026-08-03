@@ -9,41 +9,28 @@ namespace
 {
     constexpr float Pi = 3.14159265358979323846f;    
     
-    constexpr uint32_t PwmFrequency = 5000;
-    constexpr uint8_t PwmResolution = 8;
-
-    constexpr uint32_t UpdateInterval = 15;
-
-    constexpr uint32_t SlowBlink = 500;
-    constexpr uint32_t FastBlink = 150;
-    constexpr uint32_t MinRandom = 50;
-    constexpr uint32_t MaxRandom = 500;
-
-    constexpr uint32_t PulseDuration = 1500;
-
-    constexpr float MaximumBrightness = 1.0f;
-    constexpr float MinimumPulseBrightness = 0.05f;
-
     constexpr uint32_t TaskStackSize = 2048;
     constexpr uint8_t TaskPriority  = 8;
 }
 
 LedController::LedController(
-    const LedControllerConfig& config
+    const LedHardwareConfig& hardwareConfig,
+    const LedAnimationConfig& animationConfig
 )
-    : _config(config)
+    : _hardwareConfig(hardwareConfig),
+      _animationConfig(animationConfig)
 {
 }
 
 void LedController::begin()
 {
     _maxDuty =
-        (1UL << PwmResolution) - 1UL;
+        (1UL << _hardwareConfig.pwmResolutionBits) - 1UL;
 
     ledcAttach(
-        _config.pin,
-        PwmFrequency,
-        PwmResolution
+        _hardwareConfig.pin,
+        _hardwareConfig.pwmFrequencyHz,
+        _hardwareConfig.pwmResolutionBits
     );
 
     writeBrightness(0.0f);
@@ -105,7 +92,8 @@ void LedController::taskLoop()
         updateOutput(currentMode, elapsedMs);
 
         vTaskDelay(
-            pdMS_TO_TICKS(UpdateInterval)
+            pdMS_TO_TICKS(
+                _animationConfig.updateIntervalMs)
         );
     }
 }
@@ -117,7 +105,7 @@ void LedController::updateOutput(
 {
     const float brightness =
         _brightness.load() *
-        MaximumBrightness;
+        _animationConfig.maximumBrightness;
 
     switch (mode)
     {
@@ -133,7 +121,7 @@ void LedController::updateOutput(
         {
             const bool on =
                 (elapsedMs /
-                    SlowBlink) % 2 == 0;
+                    _animationConfig.slowBlinkIntervalMs) % 2 == 0;
 
             writeBrightness(on ? brightness : 0.0f);
             break;
@@ -143,7 +131,7 @@ void LedController::updateOutput(
         {
             const bool on =
                 (elapsedMs /
-                    FastBlink) % 2 == 0;
+                    _animationConfig.fastBlinkIntervalMs) % 2 == 0;
 
             writeBrightness(on ? brightness : 0.0f);
             break;
@@ -152,12 +140,12 @@ void LedController::updateOutput(
         case LedMode::Pulse:
         {
             const uint32_t positionMs =
-                elapsedMs % PulseDuration;
+                elapsedMs % _animationConfig.pulseDurationMs;
 
             const float phase =
                 static_cast<float>(positionMs) /
                 static_cast<float>(
-                    PulseDuration
+                    _animationConfig.pulseDurationMs
                 );
 
             // 0 → 1 → 0 med mjuk sinuskurva.
@@ -168,7 +156,7 @@ void LedController::updateOutput(
                 );
 
             const float minimum =
-                MinimumPulseBrightness;
+                _animationConfig.minimumPulseBrightness;
 
             const float level =
                 minimum +
@@ -189,10 +177,10 @@ void LedController::writeBrightness(float brightness){
         brightness * static_cast<float>(_maxDuty)
     );
 
-    if (!_config.activeHigh)
+    if (!_hardwareConfig.activeHigh)
     {
         duty = _maxDuty - duty;
     }
 
-    ledcWrite(_config.pin, duty);  
+    ledcWrite(_hardwareConfig.pin, duty);
 }

@@ -25,6 +25,7 @@
 #include <DanceBehavior.h>
 #include <WifiConnectionService.h>
 #include <NtpTimeService.h>
+#include <RobotStateReportingConfig.h>
 
 #if defined(USE_FAKE_MOTORS)
 #include <FakeMotorController.h>
@@ -52,6 +53,7 @@ public:
 
 private:
     ArduinoClock _clock;
+    const RobotStateReportingConfig& _robotStateReportingConfig;
     WifiConnectionService _wifiConnection;
     NtpTimeService _timeService;
 
@@ -89,8 +91,6 @@ private:
 
     RobotModeRequestStore _robotModeRequestStore;
     AutonomousBehaviorRequestStore _autonomousBehaviorRequestStore;
-
-    static constexpr uint32_t RobotStateIntervalMs = 2000;
 
     uint32_t _lastRobotStateSentMs = 0;
 

@@ -7,7 +7,8 @@
 #include <freertos/task.h>
 
 #include <ILedController.h>
-#include <LedControllerConfig.h>
+#include <LedHardwareConfig.h>
+#include <LedAnimationConfig.h>
 
 #include <ArduinoRandom.h>
 
@@ -15,7 +16,8 @@ class LedController : public ILedController
 {
 public:
     explicit LedController(
-        const LedControllerConfig& config
+        const LedHardwareConfig& hardwareConfig,
+        const LedAnimationConfig& animationConfig
     );
 
     void begin() override;
@@ -26,7 +28,8 @@ public:
     void setBrightness(float brightness) override;
 
 private:
-    const LedControllerConfig& _config;
+    const LedHardwareConfig& _hardwareConfig;
+    const LedAnimationConfig& _animationConfig;
 
     std::atomic<LedMode> _mode { LedMode::Off };
     std::atomic<float> _brightness { 1.0f };

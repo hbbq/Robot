@@ -5,6 +5,9 @@
 #include <RobotMotion.h>
 #include <JoystickModel.h>
 #include <AutonomousBehaviorType.h>
+#include <JoystickConfig.h>
+#include <DriveCommandTransmissionConfig.h>
+#include <RemoteUiConfig.h>
 
 class IDisplayDriver;
 class ITouchController;
@@ -22,7 +25,10 @@ public:
         DeviceNetworkService& network,
         RobotStateStore& robotState,
         ReadinessController& readiness,
-        IClock& clock);
+        IClock& clock,
+        const JoystickConfig& joystickConfig,
+        const DriveCommandTransmissionConfig& transmissionConfig,
+        const RemoteUiConfig& uiConfig);
 
     void begin();
     void update();
@@ -33,8 +39,10 @@ private:
     DeviceNetworkService& _network;
     RobotStateStore& _robotState;
     ReadinessController& _readiness;
-    JoystickModel _joystick;
     IClock& _clock;
+    const DriveCommandTransmissionConfig& _transmissionConfig;
+    const RemoteUiConfig& _uiConfig;
+    JoystickModel _joystick;
 
     bool _dirty = true;
 
@@ -48,8 +56,6 @@ private:
 
     AutonomousBehaviorType _lastAutonomousBehavior =
         AutonomousBehaviorType::RandomDrive;
-
-    static constexpr uint32_t DriveSendIntervalMs = 100;
 
     uint32_t _lastDriveSendMs = 0;
 

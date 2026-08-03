@@ -79,7 +79,8 @@ void WaveshareEsp32C6TouchLcd169DisplayDriver::begin()
         BacklightPwmFrequency,
         BacklightPwmResolutionBits);
 
-    setBrightness(100);
+    // Application policy selects the visible brightness after begin().
+    setBrightness(0);
 }
 
 void WaveshareEsp32C6TouchLcd169DisplayDriver::flush()

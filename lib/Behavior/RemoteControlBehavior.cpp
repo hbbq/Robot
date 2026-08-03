@@ -9,11 +9,11 @@ RemoteControlBehavior::RemoteControlBehavior(
     RemoteDriveState& remoteDriveState,
     IDriveController& driveController,
     IClock& clock,
-    uint32_t commandTimeoutMs)
+    const RemoteControlBehaviorConfig& config)
     : _remoteDriveState(remoteDriveState),
       _driveController(driveController),
       _clock(clock),
-      _commandTimeoutMs(commandTimeoutMs)
+      _config(config)
 {
 }
 
@@ -34,7 +34,7 @@ void RemoteControlBehavior::update()
         _clock.millis() -
         _remoteDriveState.receivedAtMs();
 
-    if (age > _commandTimeoutMs)
+    if (age > _config.commandTimeoutMs)
     {
         _driveController.stop();
 

@@ -5,7 +5,10 @@
 #include "../AppConfig.h"
 
 RobotApp::RobotApp()
-    : _wifiConnection(
+    : _robotStateReportingConfig(
+          AppConfig::RobotStateReporting),
+
+      _wifiConnection(
           _clock,
           AppConfig::InternetWifi),
 
@@ -58,7 +61,8 @@ RobotApp::RobotApp()
     #endif
 
       _statusLed(
-          AppConfig::StatusLed),
+          AppConfig::StatusLedHardware,
+          AppConfig::StatusLedAnimation),
 
       _readiness(
           _deviceRegistry,
@@ -88,7 +92,8 @@ RobotApp::RobotApp()
         _remoteControlBehavior(
             _remoteDriveState,
             _driveController,
-            _clock)
+            _clock,
+            AppConfig::RemoteControl)
 {
 }
 
@@ -213,7 +218,7 @@ void RobotApp::updateRobotState()
 
     const bool periodicUpdate =
         nowMs - _lastRobotStateSentMs >=
-        RobotStateIntervalMs;
+        _robotStateReportingConfig.snapshotIntervalMs;
 
     if (!stateChanged &&
         !periodicUpdate)

@@ -7,11 +7,11 @@ JoystickModel::JoystickModel(
     int16_t centerX,
     int16_t centerY,
     int16_t radius,
-    float deadZone)
+    const JoystickConfig& config)
     : _centerX(centerX),
       _centerY(centerY),
       _radius(radius),
-      _deadZone(deadZone),
+      _deadZone(config.deadZone),
       _knobX(centerX),
       _knobY(centerY)
 {

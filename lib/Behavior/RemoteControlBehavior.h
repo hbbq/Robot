@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include <IBehavior.h>
+#include <RemoteControlBehaviorConfig.h>
 
 class RemoteDriveState;
 class IDriveController;
@@ -15,7 +16,7 @@ public:
         RemoteDriveState& remoteDriveState,
         IDriveController& driveController,
         IClock& clock,
-        uint32_t commandTimeoutMs = 500);
+        const RemoteControlBehaviorConfig& config);
 
     void begin() override;
     void update() override;
@@ -26,5 +27,5 @@ private:
     IDriveController& _driveController;
     IClock& _clock;
 
-    uint32_t _commandTimeoutMs;
+    const RemoteControlBehaviorConfig& _config;
 };

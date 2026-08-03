@@ -2,7 +2,8 @@
 
 #include <Tb6612MotorControllerConfig.h>
 #include <MotionControllerConfig.h>
-#include <LedControllerConfig.h>
+#include <LedHardwareConfig.h>
+#include <LedAnimationConfig.h>
 #include <CommunicationConfig.h>
 #include <ReadinessConfig.h>
 #include <Vl53l0xDistanceSensorConfig.h>
@@ -11,6 +12,12 @@
 #include <BrightnessControllerConfig.h>
 #include <WifiConnectionConfig.h>
 #include <NtpTimeServiceConfig.h>
+#include <RemoteControlBehaviorConfig.h>
+#include <RobotStateReportingConfig.h>
+#include <JoystickConfig.h>
+#include <DriveCommandTransmissionConfig.h>
+#include <RemoteUiConfig.h>
+#include <FixedBrightnessConfig.h>
 
 #if __has_include("LocalSecrets.h")
     #include "LocalSecrets.h"
@@ -25,6 +32,34 @@ namespace AppConfig
     #ifdef DEVICE_ROBOT
 
         inline constexpr RobotId SystemRobotId = 1;
+
+        inline constexpr LedHardwareConfig StatusLedHardware
+        {
+            .pin = 7,
+            .activeHigh = true,
+            .pwmFrequencyHz = 5000,
+            .pwmResolutionBits = 8
+        };
+
+        inline constexpr LedAnimationConfig StatusLedAnimation
+        {
+            .updateIntervalMs = 15,
+            .slowBlinkIntervalMs = 500,
+            .fastBlinkIntervalMs = 150,
+            .pulseDurationMs = 1500,
+            .maximumBrightness = 1.0f,
+            .minimumPulseBrightness = 0.05f
+        };
+
+        inline constexpr RemoteControlBehaviorConfig RemoteControl
+        {
+            .commandTimeoutMs = 500
+        };
+
+        inline constexpr RobotStateReportingConfig RobotStateReporting
+        {
+            .snapshotIntervalMs = 2000
+        };
 
         inline constexpr WifiConnectionConfig InternetWifi
         {
@@ -95,6 +130,13 @@ namespace AppConfig
 
         inline constexpr RandomDriveBehaviorConfig AutonomousBehavior
         {
+            .forwardChancePercent = 70,
+            .minimumWaitMs = 500,
+            .maximumWaitMs = 2000,
+            .minimumForwardDistanceMeters = 0.2f,
+            .maximumForwardDistanceMeters = 1.0f,
+            .minimumTurnDegrees = 30.0f,
+            .maximumTurnDegrees = 150.0f,
             .obstacleThresholdMillimeters = 250,
             .backupDistanceMeters = 0.15f,
             .minimumAvoidanceTurnDegrees = 60.0f,
@@ -120,6 +162,24 @@ namespace AppConfig
     #elifdef DEVICE_DISPLAY
 
         inline constexpr RobotId SystemRobotId = 1;
+
+        inline constexpr LedHardwareConfig StatusLedHardware
+        {
+            .pin = 7,
+            .activeHigh = true,
+            .pwmFrequencyHz = 5000,
+            .pwmResolutionBits = 8
+        };
+
+        inline constexpr LedAnimationConfig StatusLedAnimation
+        {
+            .updateIntervalMs = 15,
+            .slowBlinkIntervalMs = 500,
+            .fastBlinkIntervalMs = 150,
+            .pulseDurationMs = 1500,
+            .maximumBrightness = 1.0f,
+            .minimumPulseBrightness = 0.05f
+        };
 
         inline constexpr BrightnessControllerConfig DisplayBrightness
         {
@@ -169,6 +229,26 @@ namespace AppConfig
 
         inline constexpr RobotId SystemRobotId = 1;
 
+        inline constexpr JoystickConfig Joystick
+        {
+            .deadZone = 0.12f
+        };
+
+        inline constexpr DriveCommandTransmissionConfig DriveTransmission
+        {
+            .sendIntervalMs = 100
+        };
+
+        inline constexpr RemoteUiConfig RemoteUi
+        {
+            .selectionReleaseMs = 150
+        };
+
+        inline constexpr FixedBrightnessConfig RemoteBrightness
+        {
+            .percentage = 50
+        };
+
         inline constexpr CommunicationConfig Communication
         {
             .wifiChannel = WifiChannel,
@@ -210,11 +290,6 @@ namespace AppConfig
     #else
         #error "No device type selected"
     #endif
-
-    inline constexpr LedControllerConfig StatusLed
-    {
-        .pin = 7,
-    };
 
     inline constexpr uint8_t MotorStandbyPin = 10;
 
