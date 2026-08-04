@@ -29,6 +29,8 @@
 
 #include <Tb6612MotorController.h>
 #include <Tb6612StandbyController.h>
+#include <Esp32ServoController.h>
+#include <DistanceSensorScanner.h>
 
 #if defined(USE_FAKE_DISTANCE_SENSOR)
 #include <FakeDistanceSensor.h>
@@ -58,11 +60,13 @@ private:
     EspNowManager _espNow;
     DeviceNetworkService _deviceNetwork;
     Tb6612StandbyController _motorStandby;
+    Esp32ServoController _frontServo;
     Tb6612MotorController _leftMotor;
     Tb6612MotorController _rightMotor;
     DriveController _driveController;
     MotionController _motionController;
     RobotDistanceSensor _frontDistanceSensor;
+    DistanceSensorScanner _distanceSensorScanner;
     ReadinessController _readiness;
     LedController _statusLed;
     IdleBehavior _idleBehavior;

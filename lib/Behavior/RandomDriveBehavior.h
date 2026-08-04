@@ -7,6 +7,7 @@
 
 class IMotionController;
 class IDistanceSensor;
+class DistanceSensorScanner;
 class IClock;
 class IRandom;
 
@@ -16,6 +17,7 @@ public:
     RandomDriveBehavior(
         IMotionController& motionController,
         IDistanceSensor& distanceSensor,
+        DistanceSensorScanner& distanceSensorScanner,
         IClock& clock,
         IRandom& random,
         const RandomDriveBehaviorConfig& config);
@@ -31,11 +33,16 @@ private:
         MovingForward,
         Turning,
         BackingAway,
-        AvoidanceTurning
+        ScanningLeft,
+        ScanningRight,
+        CenteringSensor,
+        AvoidanceTurning,
+        Blocked
     };
 
     IMotionController& _motionController;
     IDistanceSensor& _distanceSensor;
+    DistanceSensorScanner& _distanceSensorScanner;
     IClock& _clock;
     IRandom& _random;
     const RandomDriveBehaviorConfig& _config;
@@ -48,10 +55,20 @@ private:
     bool _sensorReadingLost = false;
     uint32_t _sensorReadingLostAtMs = 0;
 
+    bool _leftReadingValid = false;
+    bool _rightReadingValid = false;
+    uint16_t _leftDistanceMillimeters = 0;
+    uint16_t _rightDistanceMillimeters = 0;
+    bool _avoidanceTurnLeft = false;
+
     void startWaiting();
     void startForward();
     void startTurn();
     void startAvoidance();
+    void startLeftScan();
+    void finishLeftScan();
+    void finishRightScan();
+    void chooseAvoidanceDirection();
     void startAvoidanceTurn();
     void updateMovingForward();
 };

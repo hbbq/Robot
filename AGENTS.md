@@ -813,3 +813,24 @@ For example, an LED may have:
 - animation configuration: blink periods, pulse timing, brightness range.
 
 These concepts should remain distinct rather than being combined simply because `LedController` uses both.
+
+Hardware resource assignments such as GPIO pins, LEDC channels, UARTs and I2C
+  buses belong in hardware/application configuration rather than being hardcoded
+  inside reusable drivers.
+
+### ESP32-C6 LEDC resource allocation
+
+- Do not use automatic `ledcAttach()` allocation for application hardware that
+  requires different PWM frequencies or resolutions.
+- ESP32-C6 LEDC channels share timers in channel pairs. Attaching a channel can
+  therefore reconfigure the timer used by another channel even when both
+  `ledcAttach()` calls succeed.
+- Allocate LEDC channels explicitly with `ledcAttachChannel()` and keep the
+  channel assignment in hardware configuration.
+- Outputs may share an LEDC timer only when they intentionally use the same PWM
+  frequency and resolution. Separate duty cycles still require separate channels.
+- Treat LEDC channels/timers as shared hardware resources across the entire
+  application, including motors, servos, LEDs, buzzers, and future PWM users.
+- When adding a new LEDC consumer, verify that its channel/timer allocation is
+  compatible with all existing consumers. Do not rely on initialization order.
+- Hardware drivers must check and report failure from `ledcAttachChannel()`.

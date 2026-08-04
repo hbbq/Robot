@@ -12,4 +12,5 @@ public:
 
     virtual bool hasValidReading() const = 0;
     virtual uint16_t distanceMillimeters() const = 0;
+    virtual uint32_t readingSequence() const = 0;
 };

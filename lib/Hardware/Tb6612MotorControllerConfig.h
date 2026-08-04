@@ -7,6 +7,7 @@ struct Tb6612MotorControllerConfig
     uint8_t in1Pin;
     uint8_t in2Pin;
     uint8_t pwmPin;
+    uint8_t pwmChannel;
 
     bool inverted = false;
 

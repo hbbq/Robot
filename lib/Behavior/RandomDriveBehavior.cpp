@@ -1,6 +1,7 @@
 #include "RandomDriveBehavior.h"
 
 #include <IDistanceSensor.h>
+#include <DistanceSensorScanner.h>
 #include <IMotionController.h>
 #include <IClock.h>
 #include <IRandom.h>
@@ -8,11 +9,13 @@
 RandomDriveBehavior::RandomDriveBehavior(
     IMotionController& motionController,
     IDistanceSensor& distanceSensor,
+    DistanceSensorScanner& distanceSensorScanner,
     IClock& clock,
     IRandom& random,
     const RandomDriveBehaviorConfig& config)
     : _motionController(motionController),
       _distanceSensor(distanceSensor),
+      _distanceSensorScanner(distanceSensorScanner),
       _clock(clock),
       _random(random),
       _config(config)
@@ -22,6 +25,7 @@ RandomDriveBehavior::RandomDriveBehavior(
 void RandomDriveBehavior::begin()
 {
     _motionController.stop();
+    _distanceSensorScanner.lookCenter();
     startWaiting();
 }
 
@@ -30,7 +34,8 @@ void RandomDriveBehavior::update()
     switch (_state)
     {
         case State::Waiting:
-            if (_clock.millis() - _waitStartedMs >=
+            if (!_distanceSensorScanner.isBusy() &&
+                _clock.millis() - _waitStartedMs >=
                 _waitDurationMs)
             {
                 if (_random.next(0, 100) <
@@ -59,7 +64,28 @@ void RandomDriveBehavior::update()
         case State::BackingAway:
             if (!_motionController.isBusy())
             {
-                startAvoidanceTurn();
+                startLeftScan();
+            }
+            break;
+
+        case State::ScanningLeft:
+            if (_distanceSensorScanner.isComplete())
+            {
+                finishLeftScan();
+            }
+            break;
+
+        case State::ScanningRight:
+            if (_distanceSensorScanner.isComplete())
+            {
+                finishRightScan();
+            }
+            break;
+
+        case State::CenteringSensor:
+            if (_distanceSensorScanner.isComplete())
+            {
+                chooseAvoidanceDirection();
             }
             break;
 
@@ -68,6 +94,9 @@ void RandomDriveBehavior::update()
             {
                 startWaiting();
             }
+            break;
+
+        case State::Blocked:
             break;
     }
 }
@@ -126,8 +155,80 @@ void RandomDriveBehavior::startAvoidance()
     _motionController.stop();
     _state = State::BackingAway;
 
+    _leftReadingValid = false;
+    _rightReadingValid = false;
+
     _motionController.goBackward(
         _config.backupDistanceMeters);
+}
+
+void RandomDriveBehavior::startLeftScan()
+{
+    _state = State::ScanningLeft;
+    _distanceSensorScanner.lookLeft();
+}
+
+void RandomDriveBehavior::finishLeftScan()
+{
+    _leftReadingValid =
+        _distanceSensorScanner.hasValidReading();
+
+    if (_leftReadingValid)
+    {
+        _leftDistanceMillimeters =
+            _distanceSensorScanner.distanceMillimeters();
+    }
+
+    _state = State::ScanningRight;
+    _distanceSensorScanner.lookRight();
+}
+
+void RandomDriveBehavior::finishRightScan()
+{
+    _rightReadingValid =
+        _distanceSensorScanner.hasValidReading();
+
+    if (_rightReadingValid)
+    {
+        _rightDistanceMillimeters =
+            _distanceSensorScanner.distanceMillimeters();
+    }
+
+    _state = State::CenteringSensor;
+    _distanceSensorScanner.lookCenter();
+}
+
+void RandomDriveBehavior::chooseAvoidanceDirection()
+{
+    if (!_leftReadingValid && !_rightReadingValid)
+    {
+        _motionController.stop();
+        _state = State::Blocked;
+        return;
+    }
+
+    if (_leftReadingValid && !_rightReadingValid)
+    {
+        _avoidanceTurnLeft = true;
+    }
+    else if (!_leftReadingValid && _rightReadingValid)
+    {
+        _avoidanceTurnLeft = false;
+    }
+    else if (_leftDistanceMillimeters !=
+             _rightDistanceMillimeters)
+    {
+        _avoidanceTurnLeft =
+            _leftDistanceMillimeters >
+            _rightDistanceMillimeters;
+    }
+    else
+    {
+        _avoidanceTurnLeft =
+            _random.next(0, 2) == 0;
+    }
+
+    startAvoidanceTurn();
 }
 
 void RandomDriveBehavior::startAvoidanceTurn()
@@ -139,7 +240,7 @@ void RandomDriveBehavior::startAvoidanceTurn()
             _config.minimumAvoidanceTurnDegrees,
             _config.maximumAvoidanceTurnDegrees);
 
-    if (_random.next(0, 2) == 0)
+    if (_avoidanceTurnLeft)
     {
         degrees = -degrees;
     }

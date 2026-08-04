@@ -1,10 +1,12 @@
 #include <Arduino.h>
 #include <unity.h>
 
+#include <DistanceSensorScanner.h>
 #include <FakeClock.h>
 #include <FakeDistanceSensor.h>
 #include <FakeDriveController.h>
 #include <FakeRandom.h>
+#include <FakeServoController.h>
 #include <MotionController.h>
 #include <RandomDriveBehavior.h>
 
@@ -16,6 +18,15 @@ namespace
         .turnSpeed = 0.4f,
         .millisecondsPerMeter = 1000.0f,
         .millisecondsPerDegree = 1.0f
+    };
+
+    constexpr DistanceSensorPanConfig PanConfig
+    {
+        .centerAngle = 90.0f,
+        .leftAngle = 120.0f,
+        .rightAngle = 60.0f,
+        .settleTimeMs = 100,
+        .readingTimeoutMs = 100
     };
 
     constexpr RandomDriveBehaviorConfig BehaviorConfig
@@ -34,200 +45,211 @@ namespace
         .sensorLossTimeoutMs = 200
     };
 
-    void queueForward(
-        FakeRandom& random,
-        uint32_t waitMs = 500,
-        float distanceMeters = 1.0f)
+    struct Harness
     {
-        random.addInt(waitMs);
-        random.addInt(0);
-        random.addFloat(distanceMeters);
-    }
+        FakeClock clock;
+        FakeDistanceSensor sensor;
+        FakeServoController servo;
+        DistanceSensorScanner scanner{
+            servo, sensor, clock, PanConfig};
+        FakeDriveController drive;
+        FakeRandom random;
+        MotionController motion{
+            drive, clock, MotionConfig};
+        RandomDriveBehavior behavior{
+            motion,
+            sensor,
+            scanner,
+            clock,
+            random,
+            BehaviorConfig};
 
-    void startForward(
-        RandomDriveBehavior& behavior,
-        FakeClock& clock)
-    {
-        behavior.begin();
-        clock.advance(500);
-        behavior.update();
-    }
+        void startForward()
+        {
+            random.addInt(500);
+            random.addInt(0);
+            random.addFloat(1.0f);
+            behavior.begin();
+
+            finishScanWithReading(1000, false);
+            clock.advance(400);
+            behavior.update();
+        }
+
+        void triggerObstacle()
+        {
+            sensor.setReading(200);
+            behavior.update();
+        }
+
+        void finishBackup()
+        {
+            clock.advance(100);
+            motion.update();
+            behavior.update();
+        }
+
+        void finishScanWithReading(
+            uint16_t distanceMillimeters,
+            bool updateBehavior = true)
+        {
+            clock.advance(PanConfig.settleTimeMs);
+            scanner.update();
+            sensor.setReading(distanceMillimeters);
+            scanner.update();
+
+            if (updateBehavior)
+            {
+                behavior.update();
+            }
+        }
+
+        void finishInvalidScan()
+        {
+            clock.advance(PanConfig.settleTimeMs);
+            scanner.update();
+            clock.advance(PanConfig.readingTimeoutMs);
+            scanner.update();
+            behavior.update();
+        }
+    };
 }
 
 void test_no_obstacle_keeps_forward_motion_active()
 {
-    FakeClock clock;
-    FakeDistanceSensor sensor;
-    FakeDriveController drive;
-    FakeRandom random;
-    MotionController motion(drive, clock, MotionConfig);
-    RandomDriveBehavior behavior(
-        motion, sensor, clock, random, BehaviorConfig);
+    Harness harness;
+    harness.startForward();
+    harness.sensor.setReading(1000);
+    harness.behavior.update();
 
-    sensor.setReading(1000);
-    queueForward(random);
-    startForward(behavior, clock);
-
-    behavior.update();
-
-    TEST_ASSERT_TRUE(motion.isBusy());
+    TEST_ASSERT_TRUE(harness.motion.isBusy());
     TEST_ASSERT_EQUAL_INT(
         static_cast<int>(DriveState::Forward),
-        static_cast<int>(drive.getState()));
+        static_cast<int>(harness.drive.getState()));
 }
 
-void test_obstacle_interrupts_forward_and_starts_backup()
+void test_obstacle_stops_forward_and_backs_up()
 {
-    FakeClock clock;
-    FakeDistanceSensor sensor;
-    FakeDriveController drive;
-    FakeRandom random;
-    MotionController motion(drive, clock, MotionConfig);
-    RandomDriveBehavior behavior(
-        motion, sensor, clock, random, BehaviorConfig);
+    Harness harness;
+    harness.startForward();
+    harness.triggerObstacle();
 
-    sensor.setReading(1000);
-    queueForward(random);
-    startForward(behavior, clock);
-
-    sensor.setReading(200);
-    behavior.update();
-
-    TEST_ASSERT_TRUE(motion.isBusy());
+    TEST_ASSERT_TRUE(harness.motion.isBusy());
     TEST_ASSERT_EQUAL_INT(
         static_cast<int>(DriveState::Backward),
-        static_cast<int>(drive.getState()));
-    TEST_ASSERT_EQUAL_UINT32(100, motion.getDurationMs());
+        static_cast<int>(harness.drive.getState()));
+    TEST_ASSERT_EQUAL_UINT32(100, harness.motion.getDurationMs());
 }
 
-void test_backup_completion_starts_avoidance_turn()
+void test_backup_completion_starts_left_scan()
 {
-    FakeClock clock;
-    FakeDistanceSensor sensor;
-    FakeDriveController drive;
-    FakeRandom random;
-    MotionController motion(drive, clock, MotionConfig);
-    RandomDriveBehavior behavior(
-        motion, sensor, clock, random, BehaviorConfig);
+    Harness harness;
+    harness.startForward();
+    harness.triggerObstacle();
+    harness.finishBackup();
 
-    sensor.setReading(1000);
-    queueForward(random);
-    startForward(behavior, clock);
-    sensor.setReading(200);
-    behavior.update();
+    TEST_ASSERT_FALSE(harness.motion.isBusy());
+    TEST_ASSERT_TRUE(harness.scanner.isBusy());
+    TEST_ASSERT_FLOAT_WITHIN(
+        0.001f, PanConfig.leftAngle, harness.servo.getAngle());
+}
 
-    random.addFloat(90.0f);
-    random.addInt(1);
-    clock.advance(100);
-    motion.update();
-    behavior.update();
+void test_clearer_left_side_turns_left()
+{
+    Harness harness;
+    harness.startForward();
+    harness.triggerObstacle();
+    harness.finishBackup();
+    harness.finishScanWithReading(900);
+    harness.finishScanWithReading(350);
+    harness.random.addFloat(90.0f);
+    harness.finishScanWithReading(1000);
 
-    TEST_ASSERT_TRUE(motion.isBusy());
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(DriveState::RotateLeft),
+        static_cast<int>(harness.drive.getState()));
+    TEST_ASSERT_EQUAL_UINT32(90, harness.motion.getDurationMs());
+}
+
+void test_only_valid_right_side_turns_right()
+{
+    Harness harness;
+    harness.startForward();
+    harness.triggerObstacle();
+    harness.finishBackup();
+    harness.finishInvalidScan();
+    harness.finishScanWithReading(700);
+    harness.random.addFloat(80.0f);
+    harness.finishScanWithReading(1000);
+
     TEST_ASSERT_EQUAL_INT(
         static_cast<int>(DriveState::RotateRight),
-        static_cast<int>(drive.getState()));
-    TEST_ASSERT_EQUAL_UINT32(90, motion.getDurationMs());
+        static_cast<int>(harness.drive.getState()));
 }
 
-void test_avoidance_turn_completion_resumes_normal_behavior()
+void test_no_valid_side_keeps_robot_stopped()
 {
-    FakeClock clock;
-    FakeDistanceSensor sensor;
-    FakeDriveController drive;
-    FakeRandom random;
-    MotionController motion(drive, clock, MotionConfig);
-    RandomDriveBehavior behavior(
-        motion, sensor, clock, random, BehaviorConfig);
+    Harness harness;
+    harness.startForward();
+    harness.triggerObstacle();
+    harness.finishBackup();
+    harness.finishInvalidScan();
+    harness.finishInvalidScan();
+    harness.finishScanWithReading(1000);
 
-    sensor.setReading(1000);
-    queueForward(random);
-    startForward(behavior, clock);
-    sensor.setReading(200);
-    behavior.update();
-
-    random.addFloat(90.0f);
-    random.addInt(1);
-    clock.advance(100);
-    motion.update();
-    behavior.update();
-
-    random.addInt(500);
-    clock.advance(90);
-    motion.update();
-    behavior.update();
-
-    sensor.setReading(1000);
-    random.addInt(0);
-    random.addFloat(0.5f);
-    clock.advance(500);
-    behavior.update();
-
-    TEST_ASSERT_EQUAL_INT(
-        static_cast<int>(DriveState::Forward),
-        static_cast<int>(drive.getState()));
-}
-
-void test_invalid_reading_prevents_forward_motion()
-{
-    FakeClock clock;
-    FakeDistanceSensor sensor;
-    FakeDriveController drive;
-    FakeRandom random;
-    MotionController motion(drive, clock, MotionConfig);
-    RandomDriveBehavior behavior(
-        motion, sensor, clock, random, BehaviorConfig);
-
-    sensor.invalidate();
-    random.addInt(500);
-    random.addInt(0);
-    behavior.begin();
-    clock.advance(500);
-    behavior.update();
-
-    TEST_ASSERT_FALSE(motion.isBusy());
+    TEST_ASSERT_FALSE(harness.motion.isBusy());
     TEST_ASSERT_EQUAL_INT(
         static_cast<int>(DriveState::Stopped),
-        static_cast<int>(drive.getState()));
+        static_cast<int>(harness.drive.getState()));
+}
+
+void test_invalid_center_reading_prevents_forward_motion()
+{
+    Harness harness;
+    harness.random.addInt(500);
+    harness.random.addInt(0);
+    harness.behavior.begin();
+    harness.finishInvalidScan();
+    harness.clock.advance(400);
+    harness.behavior.update();
+
+    TEST_ASSERT_FALSE(harness.motion.isBusy());
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(DriveState::Stopped),
+        static_cast<int>(harness.drive.getState()));
 }
 
 void test_wait_timing_is_safe_across_millis_overflow()
 {
-    FakeClock clock;
-    FakeDistanceSensor sensor;
-    FakeDriveController drive;
-    FakeRandom random;
-    MotionController motion(drive, clock, MotionConfig);
-    RandomDriveBehavior behavior(
-        motion, sensor, clock, random, BehaviorConfig);
+    Harness harness;
+    harness.clock.advance(UINT32_MAX - 100u);
+    harness.random.addInt(200);
+    harness.random.addInt(0);
+    harness.random.addFloat(0.5f);
+    harness.behavior.begin();
+    harness.finishScanWithReading(1000, false);
 
-    sensor.setReading(1000);
-    clock.advance(UINT32_MAX - 100u);
-    random.addInt(200);
-    random.addInt(0);
-    random.addFloat(0.5f);
-    behavior.begin();
+    harness.clock.advance(99);
+    harness.behavior.update();
+    TEST_ASSERT_FALSE(harness.motion.isBusy());
 
-    clock.advance(199);
-    behavior.update();
-    TEST_ASSERT_FALSE(motion.isBusy());
-
-    clock.advance(1);
-    behavior.update();
-    TEST_ASSERT_TRUE(motion.isBusy());
+    harness.clock.advance(1);
+    harness.behavior.update();
+    TEST_ASSERT_TRUE(harness.motion.isBusy());
 }
 
 void setup()
 {
     delay(2000);
     UNITY_BEGIN();
-
     RUN_TEST(test_no_obstacle_keeps_forward_motion_active);
-    RUN_TEST(test_obstacle_interrupts_forward_and_starts_backup);
-    RUN_TEST(test_backup_completion_starts_avoidance_turn);
-    RUN_TEST(test_avoidance_turn_completion_resumes_normal_behavior);
-    RUN_TEST(test_invalid_reading_prevents_forward_motion);
+    RUN_TEST(test_obstacle_stops_forward_and_backs_up);
+    RUN_TEST(test_backup_completion_starts_left_scan);
+    RUN_TEST(test_clearer_left_side_turns_left);
+    RUN_TEST(test_only_valid_right_side_turns_right);
+    RUN_TEST(test_no_valid_side_keeps_robot_stopped);
+    RUN_TEST(test_invalid_center_reading_prevents_forward_motion);
     RUN_TEST(test_wait_timing_is_safe_across_millis_overflow);
-
     UNITY_END();
 }
 

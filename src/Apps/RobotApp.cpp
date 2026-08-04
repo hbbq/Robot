@@ -40,6 +40,9 @@ RobotApp::RobotApp()
       _motorStandby(
           AppConfig::MotorStandby),
 
+      _frontServo(
+          AppConfig::FrontServo),
+
       _leftMotor(
           AppConfig::LeftMotor),
 
@@ -61,6 +64,12 @@ RobotApp::RobotApp()
           AppConfig::FrontDistanceSensor),
     #endif
 
+      _distanceSensorScanner(
+          _frontServo,
+          _frontDistanceSensor,
+          _clock,
+          AppConfig::FrontDistanceSensorPan),
+
       _statusLed(
           AppConfig::StatusLedHardware,
           AppConfig::StatusLedAnimation),
@@ -76,6 +85,7 @@ RobotApp::RobotApp()
         _randomDriveBehavior(
             _motionController,
             _frontDistanceSensor,
+            _distanceSensorScanner,
             _clock,
             _random,
             AppConfig::AutonomousBehavior),
@@ -107,9 +117,12 @@ void RobotApp::begin()
     _motorStandby.begin();
     _driveController.begin();
     _motorStandby.enable();
+    _frontServo.begin();
 
     _distanceSensorFunctional =
         _frontDistanceSensor.begin();
+
+    _distanceSensorScanner.begin();
 
     #ifdef USE_FAKE_DISTANCE_SENSOR
     if (_distanceSensorFunctional)
@@ -160,6 +173,7 @@ void RobotApp::update()
     handleModeRequest();
 
     _frontDistanceSensor.update();
+    _distanceSensorScanner.update();
     _motionController.update();
 
     if (!_readiness.isReady())
@@ -255,6 +269,7 @@ void RobotApp::handleModeRequest()
         _robotModeRequestStore.requestedMode();
 
     _robotModeRequestStore.clear();
+    _distanceSensorScanner.lookCenter();
 
     switch (requestedMode)
     {
@@ -336,6 +351,7 @@ void RobotApp::handleAutonomousBehaviorRequest()
     {
         _motionController.stop();
         _driveController.stop();
+        _distanceSensorScanner.lookCenter();
     }
 
     _selectedAutonomousBehavior = requestedBehavior;

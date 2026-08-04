@@ -26,6 +26,11 @@ public:
         return _distanceMillimeters;
     }
 
+    uint32_t readingSequence() const override
+    {
+        return _readingSequence;
+    }
+
     void setBeginResult(bool result)
     {
         _beginResult = result;
@@ -36,6 +41,7 @@ public:
     {
         _distanceMillimeters = distanceMillimeters;
         _valid = true;
+        ++_readingSequence;
     }
 
     void invalidate()
@@ -47,4 +53,5 @@ private:
     bool _beginResult = true;
     bool _valid = false;
     uint16_t _distanceMillimeters = 0;
+    uint32_t _readingSequence = 0;
 };

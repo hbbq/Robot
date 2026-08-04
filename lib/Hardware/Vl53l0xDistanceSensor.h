@@ -20,6 +20,7 @@ public:
 
     bool hasValidReading() const override;
     uint16_t distanceMillimeters() const override;
+    uint32_t readingSequence() const override;
 
 private:
     IClock& _clock;
@@ -31,4 +32,5 @@ private:
     uint16_t _distanceMillimeters = 0;
     uint32_t _lastMeasurementStartedMs = 0;
     uint32_t _lastValidReadingMs = 0;
+    uint32_t _readingSequence = 0;
 };

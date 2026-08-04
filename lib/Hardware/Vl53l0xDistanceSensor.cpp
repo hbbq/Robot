@@ -19,6 +19,7 @@ bool Vl53l0xDistanceSensor::begin()
 {
     _initialized = false;
     _hasReading = false;
+    _readingSequence = 0;
 
     if (!Wire.begin(
             _config.sdaPin,
@@ -84,12 +85,7 @@ void Vl53l0xDistanceSensor::update()
     _distanceMillimeters = distance;
     _lastValidReadingMs = _clock.millis();
     _hasReading = true;
-
-    Serial.print("Distance: ");
-    Serial.print(_distanceMillimeters);
-    Serial.print(" mm, Freshness: ");
-    Serial.print(_clock.millis() - _lastValidReadingMs);
-    Serial.println(" ms");  
+    ++_readingSequence;
 }
 
 bool Vl53l0xDistanceSensor::hasValidReading() const
@@ -104,6 +100,11 @@ bool Vl53l0xDistanceSensor::hasValidReading() const
 uint16_t Vl53l0xDistanceSensor::distanceMillimeters() const
 {
     return _distanceMillimeters;
+}
+
+uint32_t Vl53l0xDistanceSensor::readingSequence() const
+{
+    return _readingSequence;
 }
 
 #endif

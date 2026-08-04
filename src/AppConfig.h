@@ -19,6 +19,9 @@
 #include <RemoteUiConfig.h>
 #include <FixedBrightnessConfig.h>
 #include <Tb6612StandbyConfig.h>
+#include <ServoControllerConfig.h>
+#include <DistanceSensorPanConfig.h>
+#include <soc/soc_caps.h>
 
 #if __has_include("LocalSecrets.h")
     #include "LocalSecrets.h"
@@ -37,6 +40,7 @@ namespace AppConfig
         inline constexpr LedHardwareConfig StatusLedHardware
         {
             .pin = 7,
+            .pwmChannel = 0,
             .activeHigh = true,
             .pwmFrequencyHz = 5000,
             .pwmResolutionBits = 8
@@ -70,11 +74,32 @@ namespace AppConfig
             .activeHigh = true
         };
 
+        inline constexpr ServoControllerConfig FrontServo
+        {
+            .pin = 10,
+            .pwmChannel = 4,
+            .minimumPulseMicroseconds = 700,
+            .maximumPulseMicroseconds = 2200,
+            .minimumAngleDegrees = 20.0f,
+            .maximumAngleDegrees = 160.0f,
+            .centerAngleDegrees = 90.0f
+        };
+
+        inline constexpr DistanceSensorPanConfig FrontDistanceSensorPan
+        {
+            .centerAngle = 90.0f,
+            .leftAngle = 120.0f,
+            .rightAngle = 60.0f,
+            .settleTimeMs = 250,
+            .readingTimeoutMs = 200
+        };
+
         inline constexpr Tb6612MotorControllerConfig LeftMotor
         {
             .in1Pin = 20,
             .in2Pin = 21,
             .pwmPin = 22,
+            .pwmChannel = 2,
             .inverted = false,
             .pwmFrequency = 20000,
             .pwmResolutionBits = 8,
@@ -86,11 +111,55 @@ namespace AppConfig
             .in1Pin = 4,
             .in2Pin = 5,
             .pwmPin = 6,
+            .pwmChannel = 3,
             .inverted = true,
             .pwmFrequency = 20000,
             .pwmResolutionBits = 8,
             .minimumSpeed = 0.0f
         };
+
+        // Arduino-ESP32 3.x assigns one LEDC timer to each channel pair.
+        inline constexpr uint8_t ledcTimerForChannel(
+            uint8_t channel)
+        {
+            return channel / 2;
+        }
+
+        static_assert(
+            StatusLedHardware.pwmChannel < SOC_LEDC_CHANNEL_NUM &&
+            LeftMotor.pwmChannel < SOC_LEDC_CHANNEL_NUM &&
+            RightMotor.pwmChannel < SOC_LEDC_CHANNEL_NUM &&
+            FrontServo.pwmChannel < SOC_LEDC_CHANNEL_NUM,
+            "Configured LEDC channel is unavailable on this target");
+
+        static_assert(
+            StatusLedHardware.pwmChannel != LeftMotor.pwmChannel &&
+            StatusLedHardware.pwmChannel != RightMotor.pwmChannel &&
+            StatusLedHardware.pwmChannel != FrontServo.pwmChannel &&
+            LeftMotor.pwmChannel != RightMotor.pwmChannel &&
+            LeftMotor.pwmChannel != FrontServo.pwmChannel &&
+            RightMotor.pwmChannel != FrontServo.pwmChannel,
+            "Robot LEDC consumers must use unique channels");
+
+        static_assert(
+            LeftMotor.pwmFrequency == RightMotor.pwmFrequency &&
+            LeftMotor.pwmResolutionBits ==
+                RightMotor.pwmResolutionBits,
+            "Motor channels sharing a timer require matching PWM settings");
+
+        static_assert(
+            ledcTimerForChannel(LeftMotor.pwmChannel) ==
+                ledcTimerForChannel(RightMotor.pwmChannel),
+            "Left and right motors should share their compatible LEDC timer");
+
+        static_assert(
+            ledcTimerForChannel(StatusLedHardware.pwmChannel) !=
+                ledcTimerForChannel(LeftMotor.pwmChannel) &&
+            ledcTimerForChannel(StatusLedHardware.pwmChannel) !=
+                ledcTimerForChannel(FrontServo.pwmChannel) &&
+            ledcTimerForChannel(LeftMotor.pwmChannel) !=
+                ledcTimerForChannel(FrontServo.pwmChannel),
+            "Incompatible Robot PWM consumers must use different timers");
 
         inline constexpr WifiConnectionConfig InternetWifi
         {
@@ -197,6 +266,7 @@ namespace AppConfig
         inline constexpr LedHardwareConfig StatusLedHardware
         {
             .pin = 5,
+            .pwmChannel = 0,
             .activeHigh = true,
             .pwmFrequencyHz = 5000,
             .pwmResolutionBits = 8

@@ -27,11 +27,22 @@ void LedController::begin()
     _maxDuty =
         (1UL << _hardwareConfig.pwmResolutionBits) - 1UL;
 
-    ledcAttach(
+    const bool attached = ledcAttachChannel(
         _hardwareConfig.pin,
         _hardwareConfig.pwmFrequencyHz,
-        _hardwareConfig.pwmResolutionBits
-    );
+        _hardwareConfig.pwmResolutionBits,
+        _hardwareConfig.pwmChannel);
+
+    if (!attached)
+    {
+        Serial.printf(
+            "[LED] LEDC attach failed: pin=%u channel=%u freq=%lu res=%u\n",
+            _hardwareConfig.pin,
+            _hardwareConfig.pwmChannel,
+            static_cast<unsigned long>(
+                _hardwareConfig.pwmFrequencyHz),
+            _hardwareConfig.pwmResolutionBits);
+    }
 
     writeBrightness(0.0f);
 
