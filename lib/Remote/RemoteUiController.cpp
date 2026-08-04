@@ -355,6 +355,10 @@ void RemoteUiController::draw()
             case RobotMode::RemoteControl:
                 drawRemoteContent();
                 break;
+
+            case RobotMode::Calibration:
+                drawCalibrationContent();
+                break;
         }
     }
 
@@ -538,6 +542,21 @@ void RemoteUiController::drawAutonomousContent()
         motion,
         ContentCenterY,
         textSize,
+        ForegroundColor);
+}
+
+void RemoteUiController::drawCalibrationContent()
+{
+    drawCenteredText(
+        "CALIBRATION",
+        ContentCenterY - 28,
+        2,
+        WarningColor);
+
+    drawCenteredText(
+        motionText(_robotState.motion()),
+        ContentCenterY + 14,
+        2,
         ForegroundColor);
 }
 
@@ -794,6 +813,9 @@ const char* RemoteUiController::modeText(
 
         case RobotMode::RemoteControl:
             return "REMOTE";
+
+        case RobotMode::Calibration:
+            return "CAL";
     }
 
     return "?";

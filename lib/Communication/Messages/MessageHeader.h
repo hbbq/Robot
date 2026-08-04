@@ -6,7 +6,7 @@
 #include "MessageType.h"
 #include <RobotId.h>
 
-inline constexpr uint8_t CommunicationProtocolVersion = 3;
+inline constexpr uint8_t CommunicationProtocolVersion = 4;
 
 struct MessageHeader
 {

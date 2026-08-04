@@ -21,6 +21,8 @@
 #include <Tb6612StandbyConfig.h>
 #include <ServoControllerConfig.h>
 #include <DistanceSensorPanConfig.h>
+#include <CalibrationBehaviorConfig.h>
+#include <CalibrationWebServerConfig.h>
 #include <soc/soc_caps.h>
 
 #if __has_include("LocalSecrets.h")
@@ -66,6 +68,20 @@ namespace AppConfig
         inline constexpr RobotStateReportingConfig RobotStateReporting
         {
             .snapshotIntervalMs = 2000
+        };
+
+        inline constexpr CalibrationBehaviorConfig CalibrationBehavior
+        {
+            .maximumDistanceMeters = 3.0f,
+            .maximumTurnDegrees = 360.0f,
+            .obstacleThresholdMillimeters = 250,
+            .sensorLossTimeoutMs = 200,
+            .sessionLeaseMs = 3000
+        };
+
+        inline constexpr CalibrationWebServerConfig CalibrationWeb
+        {
+            .port = 80
         };
 
         inline constexpr Tb6612StandbyConfig MotorStandby
@@ -265,7 +281,7 @@ namespace AppConfig
 
         inline constexpr LedHardwareConfig StatusLedHardware
         {
-            .pin = 5,
+            .pin = 7,
             .pwmChannel = 0,
             .activeHigh = true,
             .pwmFrequencyHz = 5000,
@@ -396,7 +412,7 @@ namespace AppConfig
     {
         .moveSpeed = 0.5f,
         .turnSpeed = 0.3f,
-        .millisecondsPerMeter = 2000.0f,
-        .millisecondsPerDegree = 8.0f
+        .millisecondsPerMeter = 2540.0f,
+        .millisecondsPerDegree = 10.0f
     };
 }

@@ -6,5 +6,6 @@ enum class RobotMode : uint8_t
 {
     Idle = 0,
     Autonomous,
-    RemoteControl
+    RemoteControl,
+    Calibration
 };

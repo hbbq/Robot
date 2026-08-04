@@ -289,7 +289,9 @@ void FaceController::draw(
     _display.clear(
         mode == RobotMode::RemoteControl
             ? RemoteBackgroundColor
-            : AutonomousBackgroundColor);
+            : mode == RobotMode::Calibration
+                ? CalibrationBackgroundColor
+                : AutonomousBackgroundColor);
 
     if (_blinking)
     {

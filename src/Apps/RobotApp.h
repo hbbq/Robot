@@ -26,6 +26,9 @@
 #include <WifiConnectionService.h>
 #include <NtpTimeService.h>
 #include <RobotStateReportingConfig.h>
+#include <CalibrationBehavior.h>
+#include <CalibrationRequestStore.h>
+#include <CalibrationWebServer.h>
 
 #include <Tb6612MotorController.h>
 #include <Tb6612StandbyController.h>
@@ -53,6 +56,7 @@ private:
     const RobotStateReportingConfig& _robotStateReportingConfig;
     WifiConnectionService _wifiConnection;
     NtpTimeService _timeService;
+    CalibrationRequestStore _calibrationRequestStore;
 
     DeviceRegistry _deviceRegistry;
     RemoteDriveState _remoteDriveState;
@@ -76,6 +80,8 @@ private:
     DanceBehavior _danceBehavior;
     BehaviorController _behaviorController;
     RemoteControlBehavior _remoteControlBehavior;
+    CalibrationBehavior _calibrationBehavior;
+    CalibrationWebServer _calibrationWebServer;
 
     bool _distanceSensorFunctional = false;
     
@@ -98,6 +104,8 @@ private:
     void updateRobotState();
     void handleModeRequest();
     void handleAutonomousBehaviorRequest();
+    void handleCalibrationRequests();
+    void exitCalibration();
     IBehavior& selectedAutonomousBehavior();
     bool autonomousBehaviorIsAvailable(
         AutonomousBehaviorType behavior) const;

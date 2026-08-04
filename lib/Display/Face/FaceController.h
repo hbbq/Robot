@@ -130,6 +130,9 @@ private:
     static constexpr uint16_t RemoteBackgroundColor =
         0x20C3;
 
+    static constexpr uint16_t CalibrationBackgroundColor =
+        0x39A7;
+
     static constexpr uint16_t DanceBackgroundColorA =
         0x280A;
 

@@ -104,7 +104,24 @@ RobotApp::RobotApp()
             _remoteDriveState,
             _driveController,
             _clock,
-            AppConfig::RemoteControl)
+            AppConfig::RemoteControl),
+
+        _calibrationBehavior(
+            _motionController,
+            _frontDistanceSensor,
+            _distanceSensorScanner,
+            _clock,
+            AppConfig::CalibrationBehavior),
+
+        _calibrationWebServer(
+            _calibrationRequestStore,
+            _calibrationBehavior,
+            _readiness,
+            _behaviorController,
+            _driveController,
+            AppConfig::Motion,
+            AppConfig::CalibrationBehavior,
+            AppConfig::CalibrationWeb)
 {
 }
 
@@ -153,6 +170,7 @@ void RobotApp::begin()
 
     _wifiConnection.begin();
     _timeService.begin();
+    _calibrationWebServer.begin();
     
     _behaviorController.setBehavior(
         _idleBehavior);
@@ -167,8 +185,12 @@ void RobotApp::update()
     _timeService.update(
         _wifiConnection.isConnected());
 
+    _calibrationWebServer.update(
+        _wifiConnection.isConnected());
+
     _readiness.update();
 
+    handleCalibrationRequests();
     handleAutonomousBehaviorRequest();
     handleModeRequest();
 
@@ -180,10 +202,31 @@ void RobotApp::update()
     {
         _motionController.stop();
         _driveController.stop();
+
+        if (_behaviorController.currentMode() ==
+            RobotMode::Calibration)
+        {
+            exitCalibration();
+        }
+    }
+    else if (_behaviorController.currentMode() ==
+                 RobotMode::Calibration &&
+             !_wifiConnection.isConnected())
+    {
+        exitCalibration();
     }
     else
     {
         _behaviorController.update();
+
+        if (_behaviorController.currentMode() ==
+                RobotMode::Calibration &&
+            _calibrationBehavior.leaseExpired())
+        {
+            Serial.println(
+                "[Calibration] Session lease expired");
+            exitCalibration();
+        }
     }
 
     updateRobotState();
@@ -310,12 +353,102 @@ void RobotApp::handleModeRequest()
                 _remoteControlBehavior);
 
             break;
+
+        case RobotMode::Calibration:
+            // Calibration can only be entered through the local web
+            // session, never through the ESP-NOW mode request protocol.
+            Serial.println(
+                "[Robot] Remote calibration mode request rejected");
+            break;
     }
 
     Serial.printf(
         "[Robot] Mode changed: %u\n",
         static_cast<unsigned>(
             _behaviorController.currentMode()));
+}
+
+void RobotApp::handleCalibrationRequests()
+{
+    if (_calibrationRequestStore.takeStopRequest())
+    {
+        _calibrationBehavior.stop();
+        _motionController.stop();
+        _driveController.stop();
+        return;
+    }
+
+    if (_calibrationRequestStore.takeExitRequest())
+    {
+        if (_behaviorController.currentMode() ==
+            RobotMode::Calibration)
+        {
+            exitCalibration();
+        }
+    }
+
+    if (_calibrationRequestStore.takeEnterRequest())
+    {
+        if (_readiness.isReady() &&
+            _wifiConnection.isConnected() &&
+            _distanceSensorFunctional)
+        {
+            _motionController.stop();
+            _driveController.stop();
+            _distanceSensorScanner.lookCenter();
+            _behaviorController.setBehavior(
+                _calibrationBehavior);
+        }
+        else
+        {
+            Serial.println(
+                "[Calibration] Enter request rejected: not ready");
+        }
+    }
+
+    if (_calibrationRequestStore.takeKeepAliveRequest() &&
+        _behaviorController.currentMode() ==
+            RobotMode::Calibration &&
+        _wifiConnection.isConnected())
+    {
+        _calibrationBehavior.refreshLease();
+    }
+
+    if (!_calibrationRequestStore.hasMotionRequest())
+    {
+        return;
+    }
+
+    const CalibrationMotionRequest request =
+        _calibrationRequestStore.takeMotionRequest();
+
+    if (_behaviorController.currentMode() !=
+            RobotMode::Calibration ||
+        !_readiness.isReady() ||
+        !_wifiConnection.isConnected() ||
+        _calibrationBehavior.leaseExpired())
+    {
+        Serial.println(
+            "[Calibration] Motion request rejected: session inactive");
+        return;
+    }
+
+    if (!_calibrationBehavior.submitMotion(
+            request.command,
+            request.value))
+    {
+        Serial.println(
+            "[Calibration] Motion request rejected: busy or invalid");
+    }
+}
+
+void RobotApp::exitCalibration()
+{
+    _calibrationBehavior.stop();
+    _motionController.stop();
+    _driveController.stop();
+    _distanceSensorScanner.lookCenter();
+    _behaviorController.setBehavior(_idleBehavior);
 }
 
 void RobotApp::handleAutonomousBehaviorRequest()

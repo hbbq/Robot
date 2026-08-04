@@ -75,6 +75,7 @@ private:
     void drawIdleContent();
     void drawRemoteContent();
     void drawAutonomousContent();
+    void drawCalibrationContent();
     void drawDisconnectedContent();
     void drawAutonomousSelection(
         int16_t y);
