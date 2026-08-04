@@ -27,13 +27,8 @@
 #include <NtpTimeService.h>
 #include <RobotStateReportingConfig.h>
 
-#if defined(USE_FAKE_MOTORS)
-#include <FakeMotorController.h>
-using RobotMotorController = FakeMotorController;
-#else
 #include <Tb6612MotorController.h>
-using RobotMotorController = Tb6612MotorController;
-#endif
+#include <Tb6612StandbyController.h>
 
 #if defined(USE_FAKE_DISTANCE_SENSOR)
 #include <FakeDistanceSensor.h>
@@ -62,8 +57,9 @@ private:
     MessageDispatcher _messageDispatcher;
     EspNowManager _espNow;
     DeviceNetworkService _deviceNetwork;
-    RobotMotorController  _leftMotor;
-    RobotMotorController  _rightMotor;
+    Tb6612StandbyController _motorStandby;
+    Tb6612MotorController _leftMotor;
+    Tb6612MotorController _rightMotor;
     DriveController _driveController;
     MotionController _motionController;
     RobotDistanceSensor _frontDistanceSensor;

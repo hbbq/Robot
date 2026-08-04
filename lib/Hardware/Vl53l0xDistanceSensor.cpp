@@ -84,6 +84,12 @@ void Vl53l0xDistanceSensor::update()
     _distanceMillimeters = distance;
     _lastValidReadingMs = _clock.millis();
     _hasReading = true;
+
+    Serial.print("Distance: ");
+    Serial.print(_distanceMillimeters);
+    Serial.print(" mm, Freshness: ");
+    Serial.print(_clock.millis() - _lastValidReadingMs);
+    Serial.println(" ms");  
 }
 
 bool Vl53l0xDistanceSensor::hasValidReading() const

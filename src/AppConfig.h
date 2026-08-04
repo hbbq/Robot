@@ -18,6 +18,7 @@
 #include <DriveCommandTransmissionConfig.h>
 #include <RemoteUiConfig.h>
 #include <FixedBrightnessConfig.h>
+#include <Tb6612StandbyConfig.h>
 
 #if __has_include("LocalSecrets.h")
     #include "LocalSecrets.h"
@@ -53,12 +54,42 @@ namespace AppConfig
 
         inline constexpr RemoteControlBehaviorConfig RemoteControl
         {
-            .commandTimeoutMs = 500
+            .commandTimeoutMs = 500,
+            .maxLinearSpeed = 0.35f,
+            .maxAngularSpeed = 0.30f
         };
 
         inline constexpr RobotStateReportingConfig RobotStateReporting
         {
             .snapshotIntervalMs = 2000
+        };
+
+        inline constexpr Tb6612StandbyConfig MotorStandby
+        {
+            .pin = 23,
+            .activeHigh = true
+        };
+
+        inline constexpr Tb6612MotorControllerConfig LeftMotor
+        {
+            .in1Pin = 20,
+            .in2Pin = 21,
+            .pwmPin = 22,
+            .inverted = false,
+            .pwmFrequency = 20000,
+            .pwmResolutionBits = 8,
+            .minimumSpeed = 0.0f
+        };
+
+        inline constexpr Tb6612MotorControllerConfig RightMotor
+        {
+            .in1Pin = 4,
+            .in2Pin = 5,
+            .pwmPin = 6,
+            .inverted = true,
+            .pwmFrequency = 20000,
+            .pwmResolutionBits = 8,
+            .minimumSpeed = 0.0f
         };
 
         inline constexpr WifiConnectionConfig InternetWifi
@@ -165,7 +196,7 @@ namespace AppConfig
 
         inline constexpr LedHardwareConfig StatusLedHardware
         {
-            .pin = 7,
+            .pin = 5,
             .activeHigh = true,
             .pwmFrequencyHz = 5000,
             .pwmResolutionBits = 8
@@ -291,34 +322,10 @@ namespace AppConfig
         #error "No device type selected"
     #endif
 
-    inline constexpr uint8_t MotorStandbyPin = 10;
-
-    inline constexpr Tb6612MotorControllerConfig LeftMotor
-    {
-        .in1Pin = 2,
-        .in2Pin = 3,
-        .pwmPin = 4,
-        .inverted = false,
-        .pwmFrequency = 20000,
-        .pwmResolutionBits = 8,
-        .minimumSpeed = 0.0f
-    };
-
-    inline constexpr Tb6612MotorControllerConfig RightMotor
-    {
-        .in1Pin = 5,
-        .in2Pin = 6,
-        .pwmPin = 7,
-        .inverted = true,
-        .pwmFrequency = 20000,
-        .pwmResolutionBits = 8,
-        .minimumSpeed = 0.0f
-    };
-
     inline constexpr MotionControllerConfig Motion
     {
         .moveSpeed = 0.5f,
-        .turnSpeed = 0.4f,
+        .turnSpeed = 0.3f,
         .millisecondsPerMeter = 2000.0f,
         .millisecondsPerDegree = 8.0f
     };

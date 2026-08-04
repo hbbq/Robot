@@ -37,13 +37,14 @@ RobotApp::RobotApp()
           _clock,
           AppConfig::Communication.network),
 
-    #ifndef USE_FAKE_MOTORS
+      _motorStandby(
+          AppConfig::MotorStandby),
+
       _leftMotor(
           AppConfig::LeftMotor),
 
       _rightMotor(
           AppConfig::RightMotor),
-    #endif
 
       _driveController(
           _leftMotor,
@@ -103,7 +104,9 @@ void RobotApp::begin()
     delay(1000);
 
     _statusLed.begin();
+    _motorStandby.begin();
     _driveController.begin();
+    _motorStandby.enable();
 
     _distanceSensorFunctional =
         _frontDistanceSensor.begin();

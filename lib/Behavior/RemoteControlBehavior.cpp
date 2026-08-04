@@ -4,6 +4,7 @@
 #include <IDriveController.h>
 #include <IClock.h>
 #include <Arduino.h>
+#include <algorithm>
 
 RemoteControlBehavior::RemoteControlBehavior(
     RemoteDriveState& remoteDriveState,
@@ -41,20 +42,34 @@ void RemoteControlBehavior::update()
         return;
     }
 
+    const float maxLinearSpeed =
+        std::clamp(_config.maxLinearSpeed, 0.0f, 1.0f);
+
+    const float maxAngularSpeed =
+        std::clamp(_config.maxAngularSpeed, 0.0f, 1.0f);
+
     const float linear =
-        _remoteDriveState.linear();
+        std::clamp(
+            _remoteDriveState.linear(),
+            -1.0f,
+            1.0f) *
+        maxLinearSpeed;
 
     const float angular =
-        _remoteDriveState.angular();
+        std::clamp(
+            _remoteDriveState.angular(),
+            -1.0f,
+            1.0f) *
+        maxAngularSpeed;
 
     _driveController.setDrive(
         linear,
         angular);
 
-        Serial.printf(
-            "RemoteControlBehavior: linear=%.2f, angular=%.2f\n",
-            linear,
-            angular);
+    Serial.printf(
+        "RemoteControlBehavior: linear=%.2f, angular=%.2f\n",
+        linear,
+        angular);
 }
 
 RobotMode RemoteControlBehavior::mode() const
