@@ -61,8 +61,8 @@ namespace AppConfig
         inline constexpr RemoteControlBehaviorConfig RemoteControl
         {
             .commandTimeoutMs = 500,
-            .maxLinearSpeed = 0.35f,
-            .maxAngularSpeed = 0.30f
+            .maxLinearSpeed = 0.65,
+            .maxAngularSpeed = 0.45f
         };
 
         inline constexpr RobotStateReportingConfig RobotStateReporting
@@ -410,8 +410,8 @@ namespace AppConfig
 
     inline constexpr MotionControllerConfig Motion
     {
-        .moveSpeed = 0.5f,
-        .turnSpeed = 0.3f,
+        .moveSpeed = 0.65f,
+        .turnSpeed = 0.45f,
         .millisecondsPerMeter = 2540.0f,
         .millisecondsPerDegree = 10.0f
     };
