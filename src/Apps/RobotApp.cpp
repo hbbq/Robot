@@ -84,7 +84,6 @@ RobotApp::RobotApp()
 
         _randomDriveBehavior(
             _motionController,
-            _frontDistanceSensor,
             _distanceSensorScanner,
             _clock,
             _random,
@@ -92,7 +91,7 @@ RobotApp::RobotApp()
 
         _exploreBehavior(
             _motionController,
-            _frontDistanceSensor,
+            _distanceSensorScanner,
             _clock,
             _random,
             AppConfig::ExploreBehavior),

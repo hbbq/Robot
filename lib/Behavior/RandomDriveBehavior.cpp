@@ -1,6 +1,6 @@
 #include "RandomDriveBehavior.h"
 
-#include <IDistanceSensor.h>
+#include <Arduino.h>
 #include <DistanceSensorScanner.h>
 #include <IMotionController.h>
 #include <IClock.h>
@@ -8,13 +8,11 @@
 
 RandomDriveBehavior::RandomDriveBehavior(
     IMotionController& motionController,
-    IDistanceSensor& distanceSensor,
     DistanceSensorScanner& distanceSensorScanner,
     IClock& clock,
     IRandom& random,
     const RandomDriveBehaviorConfig& config)
     : _motionController(motionController),
-      _distanceSensor(distanceSensor),
       _distanceSensorScanner(distanceSensorScanner),
       _clock(clock),
       _random(random),
@@ -25,7 +23,6 @@ RandomDriveBehavior::RandomDriveBehavior(
 void RandomDriveBehavior::begin()
 {
     _motionController.stop();
-    _distanceSensorScanner.lookCenter();
     startWaiting();
 }
 
@@ -34,8 +31,7 @@ void RandomDriveBehavior::update()
     switch (_state)
     {
         case State::Waiting:
-            if (!_distanceSensorScanner.isBusy() &&
-                _clock.millis() - _waitStartedMs >=
+            if (_clock.millis() - _waitStartedMs >=
                 _waitDurationMs)
             {
                 if (_random.next(0, 100) <
@@ -108,6 +104,8 @@ RobotMode RandomDriveBehavior::mode() const
 
 void RandomDriveBehavior::startWaiting()
 {
+    _distanceSensorScanner.startContinuousSweep();
+    _forwardRefusalLogged = false;
     _state = State::Waiting;
     _waitDurationMs = _random.next(
         _config.minimumWaitMs,
@@ -117,10 +115,41 @@ void RandomDriveBehavior::startWaiting()
 
 void RandomDriveBehavior::startForward()
 {
-    if (!_distanceSensor.hasValidReading())
+    const FrontScanAssessment assessment =
+        _distanceSensorScanner.assessFront(
+            _config.obstacleThresholdMillimeters);
+
+    if (assessment != FrontScanAssessment::Clear)
     {
+        const uint8_t assessmentValue =
+            static_cast<uint8_t>(assessment);
+
+        if (!_forwardRefusalLogged ||
+            assessmentValue != _lastForwardRefusalAssessment)
+        {
+            Serial.printf(
+                "[RandomDrive] state=Waiting scan=%s sweep=%u "
+                "forward=REFUSED\n",
+                assessment == FrontScanAssessment::Obstacle
+                    ? "OBSTACLE"
+                    : "INCOMPLETE",
+                _distanceSensorScanner.isContinuousSweepActive()
+                    ? 1u
+                    : 0u);
+            _forwardRefusalLogged = true;
+            _lastForwardRefusalAssessment = assessmentValue;
+        }
         return;
     }
+
+    _forwardRefusalLogged = false;
+
+    Serial.printf(
+        "[RandomDrive] state=Waiting scan=CLEAR sweep=%u "
+        "forward=STARTED\n",
+        _distanceSensorScanner.isContinuousSweepActive()
+            ? 1u
+            : 0u);
 
     _state = State::MovingForward;
     _sensorReadingLost = false;
@@ -135,6 +164,7 @@ void RandomDriveBehavior::startForward()
 
 void RandomDriveBehavior::startTurn()
 {
+    _distanceSensorScanner.lookCenter();
     _state = State::Turning;
 
     float degrees =
@@ -153,6 +183,7 @@ void RandomDriveBehavior::startTurn()
 void RandomDriveBehavior::startAvoidance()
 {
     _motionController.stop();
+    _distanceSensorScanner.lookCenter();
     _state = State::BackingAway;
 
     _leftReadingValid = false;
@@ -252,16 +283,18 @@ void RandomDriveBehavior::updateMovingForward()
 {
     const uint32_t nowMs = _clock.millis();
 
-    if (_distanceSensor.hasValidReading())
+    const FrontScanAssessment assessment =
+        _distanceSensorScanner.assessFront(
+            _config.obstacleThresholdMillimeters);
+
+    if (assessment == FrontScanAssessment::Obstacle)
+    {
+        startAvoidance();
+        return;
+    }
+    else if (assessment == FrontScanAssessment::Clear)
     {
         _sensorReadingLost = false;
-
-        if (_distanceSensor.distanceMillimeters() <
-            _config.obstacleThresholdMillimeters)
-        {
-            startAvoidance();
-            return;
-        }
     }
     else if (!_sensorReadingLost)
     {

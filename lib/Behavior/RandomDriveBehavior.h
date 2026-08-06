@@ -6,7 +6,6 @@
 #include <RandomDriveBehaviorConfig.h>
 
 class IMotionController;
-class IDistanceSensor;
 class DistanceSensorScanner;
 class IClock;
 class IRandom;
@@ -16,7 +15,6 @@ class RandomDriveBehavior : public IBehavior
 public:
     RandomDriveBehavior(
         IMotionController& motionController,
-        IDistanceSensor& distanceSensor,
         DistanceSensorScanner& distanceSensorScanner,
         IClock& clock,
         IRandom& random,
@@ -41,7 +39,6 @@ private:
     };
 
     IMotionController& _motionController;
-    IDistanceSensor& _distanceSensor;
     DistanceSensorScanner& _distanceSensorScanner;
     IClock& _clock;
     IRandom& _random;
@@ -60,6 +57,8 @@ private:
     uint16_t _leftDistanceMillimeters = 0;
     uint16_t _rightDistanceMillimeters = 0;
     bool _avoidanceTurnLeft = false;
+    bool _forwardRefusalLogged = false;
+    uint8_t _lastForwardRefusalAssessment = 0xFF;
 
     void startWaiting();
     void startForward();

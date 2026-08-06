@@ -6,7 +6,7 @@
 #include <IBehavior.h>
 
 class IMotionController;
-class IDistanceSensor;
+class DistanceSensorScanner;
 class IClock;
 class IRandom;
 
@@ -15,7 +15,7 @@ class ExploreBehavior : public IBehavior
 public:
     ExploreBehavior(
         IMotionController& motionController,
-        IDistanceSensor& distanceSensor,
+        DistanceSensorScanner& distanceSensorScanner,
         IClock& clock,
         IRandom& random,
         const ExploreBehaviorConfig& config);
@@ -35,7 +35,7 @@ private:
     };
 
     IMotionController& _motionController;
-    IDistanceSensor& _distanceSensor;
+    DistanceSensorScanner& _distanceSensorScanner;
     IClock& _clock;
     IRandom& _random;
     const ExploreBehaviorConfig& _config;
@@ -44,6 +44,8 @@ private:
     uint32_t _waitStartedMs = 0;
     bool _sensorReadingLost = false;
     uint32_t _sensorReadingLostAtMs = 0;
+    bool _forwardRefusalLogged = false;
+    uint8_t _lastForwardRefusalAssessment = 0xFF;
 
     void startWaiting();
     void startForward();

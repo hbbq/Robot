@@ -1,6 +1,7 @@
 #include "Esp32ServoController.h"
 
 #include <Arduino.h>
+#include <ServoPulseMapper.h>
 
 #include <algorithm>
 #include <cmath>
@@ -48,31 +49,19 @@ void Esp32ServoController::begin()
 
 void Esp32ServoController::setAngle(float degrees)
 {
+    const float safeDegrees = std::isfinite(degrees)
+        ? degrees
+        : _config.centerAngleDegrees;
+
     _angleDegrees = std::clamp(
-        degrees,
+        safeDegrees,
         _config.minimumAngleDegrees,
         _config.maximumAngleDegrees);
 
-    const float angleRange =
-        _config.maximumAngleDegrees -
-        _config.minimumAngleDegrees;
-
-    const float normalizedAngle =
-        angleRange > 0.0f
-            ? (_angleDegrees - _config.minimumAngleDegrees) /
-                angleRange
-            : 0.0f;
-
-    const float pulseRange =
-        static_cast<float>(
-            _config.maximumPulseMicroseconds -
-            _config.minimumPulseMicroseconds);
-
     const uint32_t pulseMicroseconds =
-        static_cast<uint32_t>(std::lround(
-            static_cast<float>(
-                _config.minimumPulseMicroseconds) +
-            normalizedAngle * pulseRange));
+        servoPulseMicrosecondsForAngle(
+            _angleDegrees,
+            _config);
 
     writePulse(pulseMicroseconds);
 }

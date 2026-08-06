@@ -9,4 +9,5 @@ struct DistanceSensorPanConfig
     float rightAngle;
     uint32_t settleTimeMs;
     uint32_t readingTimeoutMs;
+    uint32_t sampleFreshnessMs;
 };

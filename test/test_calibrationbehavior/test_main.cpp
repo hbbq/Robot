@@ -26,7 +26,8 @@ namespace
         .leftAngle = 120.0f,
         .rightAngle = 60.0f,
         .settleTimeMs = 100,
-        .readingTimeoutMs = 100
+        .readingTimeoutMs = 100,
+        .sampleFreshnessMs = 1000
     };
 
     constexpr CalibrationBehaviorConfig BehaviorConfig

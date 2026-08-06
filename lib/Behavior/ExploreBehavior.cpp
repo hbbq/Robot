@@ -1,18 +1,19 @@
 #include "ExploreBehavior.h"
 
+#include <Arduino.h>
 #include <IClock.h>
-#include <IDistanceSensor.h>
+#include <DistanceSensorScanner.h>
 #include <IMotionController.h>
 #include <IRandom.h>
 
 ExploreBehavior::ExploreBehavior(
     IMotionController& motionController,
-    IDistanceSensor& distanceSensor,
+    DistanceSensorScanner& distanceSensorScanner,
     IClock& clock,
     IRandom& random,
     const ExploreBehaviorConfig& config)
     : _motionController(motionController),
-      _distanceSensor(distanceSensor),
+      _distanceSensorScanner(distanceSensorScanner),
       _clock(clock),
       _random(random),
       _config(config)
@@ -31,10 +32,54 @@ void ExploreBehavior::update()
     {
         case State::Waiting:
             if (_clock.millis() - _waitStartedMs >=
-                    _config.pauseBetweenMovesMs &&
-                _distanceSensor.hasValidReading())
+                _config.pauseBetweenMovesMs)
             {
-                startForward();
+                const FrontScanAssessment assessment =
+                    _distanceSensorScanner.assessFront(
+                        _config.obstacleThresholdMillimeters);
+
+                if (assessment == FrontScanAssessment::Clear)
+                {
+                    _forwardRefusalLogged = false;
+                    Serial.printf(
+                        "[Explore] state=Waiting scan=CLEAR sweep=%u "
+                        "forward=STARTED\n",
+                        _distanceSensorScanner.isContinuousSweepActive()
+                            ? 1u
+                            : 0u);
+                    startForward();
+                }
+                else if (assessment == FrontScanAssessment::Obstacle)
+                {
+                    _forwardRefusalLogged = false;
+                    Serial.printf(
+                        "[Explore] state=Waiting scan=OBSTACLE sweep=%u "
+                        "transition=BackingAway\n",
+                        _distanceSensorScanner.isContinuousSweepActive()
+                            ? 1u
+                            : 0u);
+                    startAvoidance();
+                }
+                else
+                {
+                    const uint8_t assessmentValue =
+                        static_cast<uint8_t>(assessment);
+
+                    if (!_forwardRefusalLogged ||
+                        assessmentValue !=
+                            _lastForwardRefusalAssessment)
+                    {
+                        Serial.printf(
+                            "[Explore] state=Waiting scan=INCOMPLETE sweep=%u "
+                            "forward=REFUSED reason=waiting-for-valid-front\n",
+                            _distanceSensorScanner.isContinuousSweepActive()
+                                ? 1u
+                                : 0u);
+                        _forwardRefusalLogged = true;
+                        _lastForwardRefusalAssessment =
+                            assessmentValue;
+                    }
+                }
             }
             break;
 
@@ -66,6 +111,8 @@ RobotMode ExploreBehavior::mode() const
 
 void ExploreBehavior::startWaiting()
 {
+    _distanceSensorScanner.startContinuousSweep();
+    _forwardRefusalLogged = false;
     _state = State::Waiting;
     _waitStartedMs = _clock.millis();
 }
@@ -95,6 +142,7 @@ void ExploreBehavior::finishForwardMovement()
 
 void ExploreBehavior::startCourseCorrection()
 {
+    _distanceSensorScanner.lookCenter();
     _state = State::CourseCorrecting;
 
     float degrees =
@@ -113,6 +161,7 @@ void ExploreBehavior::startCourseCorrection()
 void ExploreBehavior::startAvoidance()
 {
     _motionController.stop();
+    _distanceSensorScanner.lookCenter();
     _state = State::BackingAway;
     _motionController.goBackward(
         _config.backupDistanceMeters);
@@ -139,16 +188,24 @@ void ExploreBehavior::updateMovingForward()
 {
     const uint32_t nowMs = _clock.millis();
 
-    if (_distanceSensor.hasValidReading())
+    const FrontScanAssessment assessment =
+        _distanceSensorScanner.assessFront(
+            _config.obstacleThresholdMillimeters);
+
+    if (assessment == FrontScanAssessment::Obstacle)
+    {
+        Serial.printf(
+            "[Explore] state=MovingForward scan=OBSTACLE sweep=%u "
+            "transition=BackingAway\n",
+            _distanceSensorScanner.isContinuousSweepActive()
+                ? 1u
+                : 0u);
+        startAvoidance();
+        return;
+    }
+    else if (assessment == FrontScanAssessment::Clear)
     {
         _sensorReadingLost = false;
-
-        if (_distanceSensor.distanceMillimeters() <
-            _config.obstacleThresholdMillimeters)
-        {
-            startAvoidance();
-            return;
-        }
     }
     else if (!_sensorReadingLost)
     {

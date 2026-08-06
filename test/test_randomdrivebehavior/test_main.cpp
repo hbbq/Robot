@@ -26,7 +26,8 @@ namespace
         .leftAngle = 120.0f,
         .rightAngle = 60.0f,
         .settleTimeMs = 100,
-        .readingTimeoutMs = 100
+        .readingTimeoutMs = 100,
+        .sampleFreshnessMs = 1000
     };
 
     constexpr RandomDriveBehaviorConfig BehaviorConfig
@@ -58,7 +59,6 @@ namespace
             drive, clock, MotionConfig};
         RandomDriveBehavior behavior{
             motion,
-            sensor,
             scanner,
             clock,
             random,
@@ -72,14 +72,16 @@ namespace
             behavior.begin();
 
             finishScanWithReading(1000, false);
-            clock.advance(400);
+            finishScanWithReading(1000, false);
+            finishScanWithReading(1000, false);
+            finishScanWithReading(1000, false);
+            clock.advance(100);
             behavior.update();
         }
 
         void triggerObstacle()
         {
-            sensor.setReading(200);
-            behavior.update();
+            finishScanWithReading(200);
         }
 
         void finishBackup()
@@ -128,6 +130,36 @@ void test_no_obstacle_keeps_forward_motion_active()
         static_cast<int>(harness.drive.getState()));
 }
 
+void test_clear_complete_front_starts_while_continuous_sweep_is_busy()
+{
+    Harness harness;
+    harness.random.addInt(500);
+    harness.random.addInt(0);
+    harness.random.addFloat(1.0f);
+    harness.behavior.begin();
+
+    harness.finishScanWithReading(1000, false);
+    harness.finishScanWithReading(1000, false);
+    harness.finishScanWithReading(1000, false);
+    harness.finishScanWithReading(1000, false);
+
+    TEST_ASSERT_TRUE(harness.scanner.isContinuousSweepActive());
+    TEST_ASSERT_TRUE(harness.scanner.isBusy());
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(FrontScanAssessment::Clear),
+        static_cast<int>(harness.scanner.assessFront(
+            BehaviorConfig.obstacleThresholdMillimeters)));
+
+    harness.clock.advance(100);
+    harness.behavior.update();
+
+    TEST_ASSERT_TRUE(harness.motion.isBusy());
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(DriveState::Forward),
+        static_cast<int>(harness.drive.getState()));
+    TEST_ASSERT_TRUE(harness.scanner.isContinuousSweepActive());
+}
+
 void test_obstacle_stops_forward_and_backs_up()
 {
     Harness harness;
@@ -139,6 +171,32 @@ void test_obstacle_stops_forward_and_backs_up()
         static_cast<int>(DriveState::Backward),
         static_cast<int>(harness.drive.getState()));
     TEST_ASSERT_EQUAL_UINT32(100, harness.motion.getDurationMs());
+}
+
+void test_left_only_obstacle_stops_when_center_is_clear()
+{
+    Harness harness;
+    harness.startForward();
+    harness.finishScanWithReading(1000);
+    harness.finishScanWithReading(200);
+
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(DriveState::Backward),
+        static_cast<int>(harness.drive.getState()));
+}
+
+void test_right_only_obstacle_stops_when_center_is_clear()
+{
+    Harness harness;
+    harness.startForward();
+    harness.finishScanWithReading(1000);
+    harness.finishScanWithReading(1000);
+    harness.finishScanWithReading(1000);
+    harness.finishScanWithReading(200);
+
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(DriveState::Backward),
+        static_cast<int>(harness.drive.getState()));
 }
 
 void test_backup_completion_starts_left_scan()
@@ -223,13 +281,16 @@ void test_wait_timing_is_safe_across_millis_overflow()
 {
     Harness harness;
     harness.clock.advance(UINT32_MAX - 100u);
-    harness.random.addInt(200);
+    harness.random.addInt(600);
     harness.random.addInt(0);
     harness.random.addFloat(0.5f);
     harness.behavior.begin();
     harness.finishScanWithReading(1000, false);
+    harness.finishScanWithReading(1000, false);
+    harness.finishScanWithReading(1000, false);
+    harness.finishScanWithReading(1000, false);
 
-    harness.clock.advance(99);
+    harness.clock.advance(199);
     harness.behavior.update();
     TEST_ASSERT_FALSE(harness.motion.isBusy());
 
@@ -243,7 +304,10 @@ void setup()
     delay(2000);
     UNITY_BEGIN();
     RUN_TEST(test_no_obstacle_keeps_forward_motion_active);
+    RUN_TEST(test_clear_complete_front_starts_while_continuous_sweep_is_busy);
     RUN_TEST(test_obstacle_stops_forward_and_backs_up);
+    RUN_TEST(test_left_only_obstacle_stops_when_center_is_clear);
+    RUN_TEST(test_right_only_obstacle_stops_when_center_is_clear);
     RUN_TEST(test_backup_completion_starts_left_scan);
     RUN_TEST(test_clearer_left_side_turns_left);
     RUN_TEST(test_only_valid_right_side_turns_right);

@@ -94,10 +94,11 @@ namespace AppConfig
         {
             .pin = 10,
             .pwmChannel = 4,
-            .minimumPulseMicroseconds = 700,
-            .maximumPulseMicroseconds = 2200,
-            .minimumAngleDegrees = 20.0f,
-            .maximumAngleDegrees = 160.0f,
+            .minimumPulseMicroseconds = 530,
+            .centerPulseMicroseconds = 1500,
+            .maximumPulseMicroseconds = 2610,
+            .minimumAngleDegrees = 0.0f,
+            .maximumAngleDegrees = 180.0f,
             .centerAngleDegrees = 90.0f
         };
 
@@ -107,7 +108,8 @@ namespace AppConfig
             .leftAngle = 120.0f,
             .rightAngle = 60.0f,
             .settleTimeMs = 250,
-            .readingTimeoutMs = 200
+            .readingTimeoutMs = 200,
+            .sampleFreshnessMs = 2500
         };
 
         inline constexpr Tb6612MotorControllerConfig LeftMotor
