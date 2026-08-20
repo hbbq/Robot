@@ -84,6 +84,7 @@ private:
     CalibrationWebServer _calibrationWebServer;
 
     bool _distanceSensorFunctional = false;
+    bool _wasReady = false;
     
     RobotStateStore _robotStateStore;
 
@@ -105,6 +106,8 @@ private:
     void handleModeRequest();
     void handleAutonomousBehaviorRequest();
     void handleCalibrationRequests();
+    void handleReadinessTransition();
+    void handleReadinessLost();
     void exitCalibration();
     IBehavior& selectedAutonomousBehavior();
     bool autonomousBehaviorIsAvailable(

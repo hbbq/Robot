@@ -4,6 +4,25 @@
 
 #include "../AppConfig.h"
 
+namespace
+{
+    const char* autonomousBehaviorText(
+        AutonomousBehaviorType behavior)
+    {
+        switch (behavior)
+        {
+            case AutonomousBehaviorType::RandomDrive:
+                return "RandomDrive";
+            case AutonomousBehaviorType::Explore:
+                return "Explore";
+            case AutonomousBehaviorType::Dance:
+                return "Dance";
+        }
+
+        return "Unknown";
+    }
+}
+
 RobotApp::RobotApp()
     : _robotStateReportingConfig(
           AppConfig::RobotStateReporting),
@@ -188,6 +207,7 @@ void RobotApp::update()
         _wifiConnection.isConnected());
 
     _readiness.update();
+    handleReadinessTransition();
 
     handleCalibrationRequests();
     handleAutonomousBehaviorRequest();
@@ -202,10 +222,10 @@ void RobotApp::update()
         _motionController.stop();
         _driveController.stop();
 
-        if (_behaviorController.currentMode() ==
-            RobotMode::Calibration)
+        if (_behaviorController.currentMode() !=
+            RobotMode::Idle)
         {
-            exitCalibration();
+            handleReadinessLost();
         }
     }
     else if (_behaviorController.currentMode() ==
@@ -310,6 +330,27 @@ void RobotApp::handleModeRequest()
     const RobotMode requestedMode =
         _robotModeRequestStore.requestedMode();
 
+    const RobotMode currentMode =
+        _behaviorController.currentMode();
+
+    const bool selectedBehaviorNeedsDistance =
+        _selectedAutonomousBehavior ==
+            AutonomousBehaviorType::RandomDrive ||
+        _selectedAutonomousBehavior ==
+            AutonomousBehaviorType::Explore;
+
+    Serial.printf(
+        "[Robot] Mode request: requested=%u current=%u ready=%u "
+        "selectedAuto=%s defaultAuto=%s requiresDistance=%u "
+        "distanceFunctional=%u\n",
+        static_cast<unsigned>(requestedMode),
+        static_cast<unsigned>(currentMode),
+        _readiness.isReady() ? 1u : 0u,
+        autonomousBehaviorText(_selectedAutonomousBehavior),
+        autonomousBehaviorText(AutonomousBehaviorType::RandomDrive),
+        selectedBehaviorNeedsDistance ? 1u : 0u,
+        _distanceSensorFunctional ? 1u : 0u);
+
     _robotModeRequestStore.clear();
     _distanceSensorScanner.lookCenter();
 
@@ -325,6 +366,15 @@ void RobotApp::handleModeRequest()
             break;
 
         case RobotMode::Autonomous:
+            if (!_readiness.isReady())
+            {
+                _motionController.stop();
+                _driveController.stop();
+                Serial.println(
+                    "[Robot] Autonomous request rejected: not ready");
+                break;
+            }
+
             if (!autonomousBehaviorIsAvailable(
                     _selectedAutonomousBehavior))
             {
@@ -334,6 +384,10 @@ void RobotApp::handleModeRequest()
                 _behaviorController.setBehavior(
                     _idleBehavior);
 
+                Serial.println(
+                    "[Robot] Autonomous request rejected: selected "
+                    "behavior requires unavailable distance sensor");
+
                 break;
             }
 
@@ -341,6 +395,11 @@ void RobotApp::handleModeRequest()
 
             _behaviorController.setBehavior(
                 selectedAutonomousBehavior());
+
+            Serial.printf(
+                "[Robot] Autonomous request accepted: behavior=%s\n",
+                autonomousBehaviorText(
+                    _selectedAutonomousBehavior));
 
             break;
 
@@ -365,6 +424,53 @@ void RobotApp::handleModeRequest()
         "[Robot] Mode changed: %u\n",
         static_cast<unsigned>(
             _behaviorController.currentMode()));
+}
+
+void RobotApp::handleReadinessTransition()
+{
+    const bool ready = _readiness.isReady();
+
+    if (_wasReady && !ready)
+    {
+        handleReadinessLost();
+    }
+    else if (!_wasReady && ready)
+    {
+        Serial.printf(
+            "[Robot] Readiness restored: mode=%u selectedAuto=%s; "
+            "waiting for explicit mode request\n",
+            static_cast<unsigned>(
+                _behaviorController.currentMode()),
+            autonomousBehaviorText(
+                _selectedAutonomousBehavior));
+    }
+
+    _wasReady = ready;
+}
+
+void RobotApp::handleReadinessLost()
+{
+    const RobotMode previousMode =
+        _behaviorController.currentMode();
+    const bool clearedModeRequest =
+        _robotModeRequestStore.hasPendingRequest();
+
+    _motionController.stop();
+    _driveController.stop();
+    _distanceSensorScanner.lookCenter();
+    _robotModeRequestStore.clear();
+    _behaviorController.setBehavior(_idleBehavior);
+
+    Serial.printf(
+        "[Robot] Readiness lost: previousMode=%u -> Idle, "
+        "motion stopped, modeRequestCleared=%u, "
+        "selectedAuto=%s preserved, autonomousRequestPending=%u\n",
+        static_cast<unsigned>(previousMode),
+        clearedModeRequest ? 1u : 0u,
+        autonomousBehaviorText(_selectedAutonomousBehavior),
+        _autonomousBehaviorRequestStore.hasPendingRequest()
+            ? 1u
+            : 0u);
 }
 
 void RobotApp::handleCalibrationRequests()

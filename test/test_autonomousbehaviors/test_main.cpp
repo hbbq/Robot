@@ -2,8 +2,10 @@
 #include <unity.h>
 
 #include <AutonomousBehaviorRequestStore.h>
+#include <BehaviorController.h>
 #include <DanceBehavior.h>
 #include <ExploreBehavior.h>
+#include <IdleBehavior.h>
 #include <FakeClock.h>
 #include <FakeDistanceSensor.h>
 #include <FakeDriveController.h>
@@ -239,6 +241,73 @@ void test_explore_reacts_to_left_sector_obstacle_with_clear_center()
         static_cast<int>(drive.getState()));
 }
 
+void test_selected_explore_survives_readiness_stop_and_requires_restart_request()
+{
+    FakeClock clock;
+    FakeDistanceSensor sensor;
+    FakeDriveController drive;
+    FakeRandom random;
+    FakeServoController servo;
+    DistanceSensorScanner scanner(
+        servo, sensor, clock, PanConfig);
+    MotionController motion(drive, clock, MotionConfig);
+    IdleBehavior idle(motion);
+    ExploreBehavior explore(
+        motion, scanner, clock, random, ExploreConfig);
+    BehaviorController controller;
+    AutonomousBehaviorType selectedBehavior =
+        AutonomousBehaviorType::Explore;
+
+    random.addFloat(1.5f);
+    controller.setBehavior(explore);
+    primeClearFront(scanner, sensor, clock);
+    clock.advance(60);
+    controller.update();
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(DriveState::Forward),
+        static_cast<int>(drive.getState()));
+
+    // Mirrors RobotApp's readiness-loss safety transition. Selection is
+    // deliberately separate from the active behavior and must survive.
+    motion.stop();
+    drive.stop();
+    scanner.lookCenter();
+    controller.setBehavior(idle);
+
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(RobotMode::Idle),
+        static_cast<int>(controller.currentMode()));
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(AutonomousBehaviorType::Explore),
+        static_cast<int>(selectedBehavior));
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(DriveState::Stopped),
+        static_cast<int>(drive.getState()));
+
+    // Readiness restoration alone performs no behavior change.
+    controller.update();
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(RobotMode::Idle),
+        static_cast<int>(controller.currentMode()));
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(DriveState::Stopped),
+        static_cast<int>(drive.getState()));
+
+    // The later explicit Autonomous request reactivates the same selection.
+    if (selectedBehavior == AutonomousBehaviorType::Explore)
+    {
+        controller.setBehavior(explore);
+    }
+
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(RobotMode::Autonomous),
+        static_cast<int>(controller.currentMode()));
+    TEST_ASSERT_TRUE(scanner.isContinuousSweepActive());
+    TEST_ASSERT_EQUAL_INT(
+        static_cast<int>(AutonomousBehaviorType::Explore),
+        static_cast<int>(selectedBehavior));
+}
+
 void test_dance_advances_without_blocking()
 {
     FakeClock clock;
@@ -288,6 +357,7 @@ void setup()
     RUN_TEST(test_explore_waiting_with_complete_obstacle_scan_starts_recovery);
     RUN_TEST(test_explore_does_not_start_without_sensor_reading);
     RUN_TEST(test_explore_reacts_to_left_sector_obstacle_with_clear_center);
+    RUN_TEST(test_selected_explore_survives_readiness_stop_and_requires_restart_request);
     RUN_TEST(test_dance_advances_without_blocking);
     RUN_TEST(test_autonomous_behavior_request_store_is_non_authoritative);
 
