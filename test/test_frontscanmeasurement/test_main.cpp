@@ -148,6 +148,24 @@ void test_store_uses_sender_age_and_local_elapsed_for_freshness()
     TEST_ASSERT_FALSE(store.isFresh(store.measurement().right, 5000));
 }
 
+void test_store_freshness_mask_changes_only_when_valid_sectors_expire()
+{
+    FrontScanMeasurementStore store;
+    const FrontScanMeasurement measurement
+    {
+        .left = {true, true, 410, 100},
+        .center = {true, true, 220, 300},
+        .right = {true, false, 180, 0},
+        .sampleFreshnessMs = 1000
+    };
+    store.setMeasurement(measurement, 5000);
+
+    TEST_ASSERT_EQUAL_UINT8(0b011, store.freshnessMask(5700));
+    TEST_ASSERT_EQUAL_UINT8(0b001, store.freshnessMask(5701));
+    TEST_ASSERT_EQUAL_UINT8(0b001, store.freshnessMask(5900));
+    TEST_ASSERT_EQUAL_UINT8(0b000, store.freshnessMask(5901));
+}
+
 void test_publisher_rate_limits_samples_and_resends_periodically()
 {
     FakeClock clock;
@@ -290,6 +308,7 @@ void setup()
     UNITY_BEGIN();
     RUN_TEST(test_message_serializes_sector_validity_distance_and_age);
     RUN_TEST(test_store_uses_sender_age_and_local_elapsed_for_freshness);
+    RUN_TEST(test_store_freshness_mask_changes_only_when_valid_sectors_expire);
     RUN_TEST(test_publisher_rate_limits_samples_and_resends_periodically);
     RUN_TEST(test_publisher_reports_timeout_invalid_sample);
     RUN_TEST(test_publisher_rate_limits_failed_send_attempts);

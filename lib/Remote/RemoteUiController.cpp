@@ -97,6 +97,9 @@ void RemoteUiController::begin()
     _lastMeasurementRevision =
         _frontScanMeasurement.revision();
 
+    _lastMeasurementFreshnessMask =
+        _frontScanMeasurement.freshnessMask(_clock.millis());
+
     _idlePulseStartedMs =
         _clock.millis();
 
@@ -260,11 +263,15 @@ void RemoteUiController::updateState()
     const uint32_t measurementRevision =
         _frontScanMeasurement.revision();
 
+    const uint8_t measurementFreshnessMask =
+        _frontScanMeasurement.freshnessMask(_clock.millis());
+
     if (ready == _lastReady &&
         mode == _lastMode &&
         motion == _lastMotion &&
         autonomousBehavior == _lastAutonomousBehavior &&
-        measurementRevision == _lastMeasurementRevision)
+        measurementRevision == _lastMeasurementRevision &&
+        measurementFreshnessMask == _lastMeasurementFreshnessMask)
     {
         return;
     }
@@ -274,6 +281,7 @@ void RemoteUiController::updateState()
     _lastMotion = motion;
     _lastAutonomousBehavior = autonomousBehavior;
     _lastMeasurementRevision = measurementRevision;
+    _lastMeasurementFreshnessMask = measurementFreshnessMask;
 
     if (mode != RobotMode::RemoteControl &&
         _joystick.active())

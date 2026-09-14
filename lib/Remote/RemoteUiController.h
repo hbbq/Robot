@@ -62,6 +62,7 @@ private:
 
     uint32_t _lastDriveSendMs = 0;
     uint32_t _lastMeasurementRevision = 0;
+    uint8_t _lastMeasurementFreshnessMask = 0;
 
     uint32_t _idlePulseStartedMs = 0;
     bool _idlePulseBright = false;

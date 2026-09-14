@@ -57,6 +57,28 @@ public:
         return nowMs - _receivedAtMs <= remainingFreshnessMs;
     }
 
+    uint8_t freshnessMask(uint32_t nowMs) const
+    {
+        uint8_t mask = 0;
+
+        if (isFresh(_measurement.left, nowMs))
+        {
+            mask |= 1U << 0;
+        }
+
+        if (isFresh(_measurement.center, nowMs))
+        {
+            mask |= 1U << 1;
+        }
+
+        if (isFresh(_measurement.right, nowMs))
+        {
+            mask |= 1U << 2;
+        }
+
+        return mask;
+    }
+
 private:
     FrontScanMeasurement _measurement;
     uint32_t _receivedAtMs = 0;
