@@ -23,6 +23,7 @@
 #include <DistanceSensorPanConfig.h>
 #include <CalibrationBehaviorConfig.h>
 #include <CalibrationWebServerConfig.h>
+#include <FrontScanTelemetryConfig.h>
 #include <soc/soc_caps.h>
 
 #if __has_include("LocalSecrets.h")
@@ -67,6 +68,12 @@ namespace AppConfig
 
         inline constexpr RobotStateReportingConfig RobotStateReporting
         {
+            .snapshotIntervalMs = 2000
+        };
+
+        inline constexpr FrontScanTelemetryConfig FrontScanTelemetry
+        {
+            .minimumSendIntervalMs = 400,
             .snapshotIntervalMs = 2000
         };
 

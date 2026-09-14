@@ -13,6 +13,7 @@ class IDisplayDriver;
 class ITouchController;
 class DeviceNetworkService;
 class RobotStateStore;
+class FrontScanMeasurementStore;
 class ReadinessController;
 class IClock;
 
@@ -24,6 +25,7 @@ public:
         ITouchController& touch,
         DeviceNetworkService& network,
         RobotStateStore& robotState,
+        FrontScanMeasurementStore& frontScanMeasurement,
         ReadinessController& readiness,
         IClock& clock,
         const JoystickConfig& joystickConfig,
@@ -38,6 +40,7 @@ private:
     ITouchController& _touch;
     DeviceNetworkService& _network;
     RobotStateStore& _robotState;
+    FrontScanMeasurementStore& _frontScanMeasurement;
     ReadinessController& _readiness;
     IClock& _clock;
     const DriveCommandTransmissionConfig& _transmissionConfig;
@@ -58,6 +61,7 @@ private:
         AutonomousBehaviorType::RandomDrive;
 
     uint32_t _lastDriveSendMs = 0;
+    uint32_t _lastMeasurementRevision = 0;
 
     uint32_t _idlePulseStartedMs = 0;
     bool _idlePulseBright = false;
@@ -71,6 +75,7 @@ private:
 
     void draw();
     void drawStatusBar();
+    void drawFrontScanDiagnostic();
     void drawModeControls();
     void drawIdleContent();
     void drawRemoteContent();

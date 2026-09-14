@@ -8,6 +8,7 @@ class RobotStateStore;
 class RemoteDriveState;
 class RobotModeRequestStore;
 class AutonomousBehaviorRequestStore;
+class FrontScanMeasurementStore;
 
 class MessageDispatcher : public IEspNowReceiver
 {
@@ -18,6 +19,7 @@ public:
         RemoteDriveState& remoteDriveState,
         RobotModeRequestStore& robotModeRequestStore,
         AutonomousBehaviorRequestStore& autonomousBehaviorRequestStore,
+        FrontScanMeasurementStore& frontScanMeasurementStore,
         IClock& clock);
 
     void onReceive(
@@ -32,6 +34,7 @@ private:
     RemoteDriveState& _remoteDriveState;
     RobotModeRequestStore& _robotModeRequestStore;
     AutonomousBehaviorRequestStore& _autonomousBehaviorRequestStore;
+    FrontScanMeasurementStore& _frontScanMeasurementStore;
     IClock& _clock;
 
     void handleAnnouncement(
@@ -65,6 +68,12 @@ private:
         int8_t rssi);
 
     void handleSetAutonomousBehavior(
+        const uint8_t senderMac[6],
+        const uint8_t* data,
+        size_t size,
+        int8_t rssi);
+
+    void handleFrontScanMeasurement(
         const uint8_t senderMac[6],
         const uint8_t* data,
         size_t size,

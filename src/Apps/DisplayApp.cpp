@@ -28,6 +28,7 @@ DisplayApp::DisplayApp()
         _remoteDriveState,
         _robotModeRequestStore,
         _autonomousBehaviorRequestStore,
+        _frontScanMeasurementStore,
         _clock),
 
       _espNow(
