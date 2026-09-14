@@ -15,6 +15,7 @@
 #include <RemoteUiController.h>
 #include <RobotModeRequestStore.h>
 #include <AutonomousBehaviorRequestStore.h>
+#include <FrontScanMeasurementStore.h>
 
 class RemoteApp
 {
@@ -27,6 +28,12 @@ public:
 private:
     ArduinoClock _clock;
 
+    RobotStateStore _robotStateStore;
+    RemoteDriveState _remoteDriveState;
+    RobotModeRequestStore _robotModeRequestStore;
+    AutonomousBehaviorRequestStore _autonomousBehaviorRequestStore;
+    FrontScanMeasurementStore _frontScanMeasurementStore;
+
     DeviceRegistry _deviceRegistry;
     MessageDispatcher _messageDispatcher;
     EspNowManager _espNow;
@@ -34,11 +41,6 @@ private:
 
     ReadinessController _readiness;
     
-    RobotStateStore _robotStateStore;
-    RemoteDriveState _remoteDriveState;
-    RobotModeRequestStore _robotModeRequestStore;
-    AutonomousBehaviorRequestStore _autonomousBehaviorRequestStore;
-
     WaveshareEsp32C6TouchLcd169DisplayDriver _display;
     Cst816TouchDriver _touch;
 

@@ -5,10 +5,12 @@
 #include <ITouchController.h>
 #include <ReadinessController.h>
 #include <RobotStateStore.h>
+#include <FrontScanMeasurementStore.h>
 #include <JoystickModel.h>
 #include <IClock.h>
 
 #include <cstring>
+#include <cstdio>
 
 namespace
 {
@@ -55,6 +57,7 @@ RemoteUiController::RemoteUiController(
     ITouchController& touch,
     DeviceNetworkService& network,
     RobotStateStore& robotState,
+    FrontScanMeasurementStore& frontScanMeasurement,
     ReadinessController& readiness,
     IClock& clock,
     const JoystickConfig& joystickConfig,
@@ -64,6 +67,7 @@ RemoteUiController::RemoteUiController(
       _touch(touch),
       _network(network),
       _robotState(robotState),
+      _frontScanMeasurement(frontScanMeasurement),
       _readiness(readiness),
       _clock(clock),
       _transmissionConfig(transmissionConfig),
@@ -89,6 +93,12 @@ void RemoteUiController::begin()
 
     _lastAutonomousBehavior =
         _robotState.autonomousBehavior();
+
+    _lastMeasurementRevision =
+        _frontScanMeasurement.revision();
+
+    _lastMeasurementFreshnessMask =
+        _frontScanMeasurement.freshnessMask(_clock.millis());
 
     _idlePulseStartedMs =
         _clock.millis();
@@ -250,10 +260,18 @@ void RemoteUiController::updateState()
     const AutonomousBehaviorType autonomousBehavior =
         _robotState.autonomousBehavior();
 
+    const uint32_t measurementRevision =
+        _frontScanMeasurement.revision();
+
+    const uint8_t measurementFreshnessMask =
+        _frontScanMeasurement.freshnessMask(_clock.millis());
+
     if (ready == _lastReady &&
         mode == _lastMode &&
         motion == _lastMotion &&
-        autonomousBehavior == _lastAutonomousBehavior)
+        autonomousBehavior == _lastAutonomousBehavior &&
+        measurementRevision == _lastMeasurementRevision &&
+        measurementFreshnessMask == _lastMeasurementFreshnessMask)
     {
         return;
     }
@@ -262,6 +280,8 @@ void RemoteUiController::updateState()
     _lastMode = mode;
     _lastMotion = motion;
     _lastAutonomousBehavior = autonomousBehavior;
+    _lastMeasurementRevision = measurementRevision;
+    _lastMeasurementFreshnessMask = measurementFreshnessMask;
 
     if (mode != RobotMode::RemoteControl &&
         _joystick.active())
@@ -342,6 +362,8 @@ void RemoteUiController::draw()
     }
     else
     {
+        drawFrontScanDiagnostic();
+
         switch (_robotState.mode())
         {
             case RobotMode::Idle:
@@ -365,6 +387,60 @@ void RemoteUiController::draw()
     drawModeControls();
 
     _display.flush();
+}
+
+void RemoteUiController::drawFrontScanDiagnostic()
+{
+    if (!_frontScanMeasurement.hasMeasurement())
+    {
+        drawCenteredText("L:M--- C:M--- R:M---", 49, 1, MutedColor);
+        return;
+    }
+
+    const FrontScanMeasurement& measurement =
+        _frontScanMeasurement.measurement();
+    const uint32_t nowMs = _clock.millis();
+
+    const auto formatSector = [this, nowMs](
+        char label,
+        const FrontScanSectorMeasurement& sector,
+        char* output,
+        size_t outputSize)
+    {
+        const char quality = !sector.hasSample
+            ? 'M'
+            : !sector.valid
+                ? 'I'
+                : _frontScanMeasurement.isFresh(sector, nowMs)
+                    ? 'V'
+                    : 'S';
+
+        if (!sector.hasSample)
+        {
+            std::snprintf(output, outputSize, "%c:%c---", label, quality);
+        }
+        else
+        {
+            std::snprintf(
+                output,
+                outputSize,
+                "%c:%c%u",
+                label,
+                quality,
+                sector.distanceMillimeters);
+        }
+    };
+
+    char left[10]{};
+    char center[10]{};
+    char right[10]{};
+    char line[32]{};
+    formatSector('L', measurement.left, left, sizeof(left));
+    formatSector('C', measurement.center, center, sizeof(center));
+    formatSector('R', measurement.right, right, sizeof(right));
+    std::snprintf(line, sizeof(line), "%s %s %s", left, center, right);
+
+    drawCenteredText(line, 49, 1, ForegroundColor);
 }
 
 void RemoteUiController::drawStatusBar()

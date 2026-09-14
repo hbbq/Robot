@@ -7,12 +7,13 @@
 #include <RobotMode.h>
 #include <RobotMotion.h>
 #include <AutonomousBehaviorType.h>
+#include <IFrontScanMeasurementSender.h>
 
 class DeviceRegistry;
 class EspNowManager;
 class IClock;
 
-class DeviceNetworkService
+class DeviceNetworkService : public IFrontScanMeasurementSender
 {
 public:
     DeviceNetworkService(
@@ -40,6 +41,8 @@ public:
         RobotMode mode);
     bool sendSetAutonomousBehavior(
         AutonomousBehaviorType behavior);
+    bool sendFrontScanMeasurement(
+        const FrontScanMeasurement& measurement) override;
 
 private:
     EspNowManager& _espNow;

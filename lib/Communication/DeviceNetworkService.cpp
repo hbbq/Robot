@@ -8,6 +8,7 @@
 #include <Messages/DriveCommandMessage.h>
 #include <Messages/SetRobotModeMessage.h>
 #include <Messages/SetAutonomousBehaviorMessage.h>
+#include <Messages/FrontScanMeasurementMessage.h>
 #include <IClock.h>
 
 DeviceNetworkService::DeviceNetworkService(
@@ -231,6 +232,22 @@ bool DeviceNetworkService::sendSetAutonomousBehavior(
     return _espNow.broadcast(
         &message,
         sizeof(message));
+}
+
+bool DeviceNetworkService::sendFrontScanMeasurement(
+    const FrontScanMeasurement& measurement)
+{
+    if (!_started)
+    {
+        return false;
+    }
+
+    const auto message = makeFrontScanMeasurementMessage(
+        nextSequenceNumber(),
+        _config.robotId,
+        measurement);
+
+    return _espNow.broadcast(&message, sizeof(message));
 }
 
 uint32_t DeviceNetworkService::nextSequenceNumber()

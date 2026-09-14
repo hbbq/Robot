@@ -42,8 +42,9 @@ RobotApp::RobotApp()
           _deviceRegistry,
           _robotStateStore,
           _remoteDriveState,
-            _robotModeRequestStore,
+          _robotModeRequestStore,
           _autonomousBehaviorRequestStore,
+          _frontScanMeasurementStore,
           _clock),
 
       _espNow(
@@ -88,6 +89,12 @@ RobotApp::RobotApp()
           _frontDistanceSensor,
           _clock,
           AppConfig::FrontDistanceSensorPan),
+
+      _frontScanTelemetryPublisher(
+          _distanceSensorScanner,
+          _deviceNetwork,
+          _clock,
+          AppConfig::FrontScanTelemetry),
 
       _statusLed(
           AppConfig::StatusLedHardware,
@@ -215,6 +222,7 @@ void RobotApp::update()
 
     _frontDistanceSensor.update();
     _distanceSensorScanner.update();
+    _frontScanTelemetryPublisher.update();
     _motionController.update();
 
     if (!_readiness.isReady())

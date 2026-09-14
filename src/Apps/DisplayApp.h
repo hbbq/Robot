@@ -17,6 +17,7 @@
 #include <ArduinoRandom.h>
 #include <RemoteDriveState.h>
 #include <AutonomousBehaviorRequestStore.h>
+#include <FrontScanMeasurementStore.h>
 
 class DisplayApp
 {
@@ -30,6 +31,12 @@ private:
     ArduinoClock _clock;
     ArduinoRandom _random;
 
+    RobotStateStore _robotStateStore;
+    RemoteDriveState _remoteDriveState;
+    RobotModeRequestStore _robotModeRequestStore;
+    AutonomousBehaviorRequestStore _autonomousBehaviorRequestStore;
+    FrontScanMeasurementStore _frontScanMeasurementStore;
+
     DeviceRegistry _deviceRegistry;
     MessageDispatcher _messageDispatcher;
     EspNowManager _espNow;
@@ -38,11 +45,6 @@ private:
     LedController _statusLed;
     ReadinessController _readiness;
     
-    RobotStateStore _robotStateStore;
-    RemoteDriveState _remoteDriveState;
-    RobotModeRequestStore _robotModeRequestStore;
-    AutonomousBehaviorRequestStore _autonomousBehaviorRequestStore;
-
     WaveshareEsp32C6TouchLcd147DisplayDriver _display;
     BrightnessController _brightnessController;
     FaceController _faceController;
