@@ -84,6 +84,27 @@ void test_missing_new_reading_completes_as_invalid()
 
     TEST_ASSERT_TRUE(scanner.isComplete());
     TEST_ASSERT_FALSE(scanner.hasValidReading());
+    TEST_ASSERT_EQUAL_UINT32(1, scanner.sampleRevision());
+}
+
+void test_sample_revision_advances_for_each_completed_sample()
+{
+    FakeClock clock;
+    FakeDistanceSensor sensor;
+    FakeServoController servo;
+    DistanceSensorScanner scanner(servo, sensor, clock, PanConfig);
+
+    scanner.startContinuousSweep();
+    TEST_ASSERT_EQUAL_UINT32(0, scanner.sampleRevision());
+    completeSweepSample(scanner, sensor, clock, 900);
+    TEST_ASSERT_EQUAL_UINT32(1, scanner.sampleRevision());
+
+    clock.advance(PanConfig.settleTimeMs);
+    scanner.update();
+    sensor.invalidate();
+    clock.advance(PanConfig.readingTimeoutMs);
+    scanner.update();
+    TEST_ASSERT_EQUAL_UINT32(2, scanner.sampleRevision());
 }
 
 void test_continuous_sweep_uses_center_left_center_right_sequence()
@@ -156,6 +177,7 @@ void setup()
     RUN_TEST(test_semantic_directions_use_configured_angles);
     RUN_TEST(test_reading_from_settle_period_is_not_accepted);
     RUN_TEST(test_missing_new_reading_completes_as_invalid);
+    RUN_TEST(test_sample_revision_advances_for_each_completed_sample);
     RUN_TEST(test_continuous_sweep_uses_center_left_center_right_sequence);
     RUN_TEST(test_fresh_readings_are_attributed_to_the_target_sector);
     RUN_TEST(test_stale_or_invalid_sector_is_not_clear);

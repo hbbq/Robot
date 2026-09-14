@@ -14,6 +14,7 @@ RemoteApp::RemoteApp()
         _remoteDriveState,
         _robotModeRequestStore,
         _autonomousBehaviorRequestStore,
+        _frontScanMeasurementStore,
         _clock),
 
       _espNow(
@@ -37,6 +38,7 @@ RemoteApp::RemoteApp()
           _touch,
           _deviceNetwork,
           _robotStateStore,
+          _frontScanMeasurementStore,
           _readiness,
           _clock,
           AppConfig::Joystick,

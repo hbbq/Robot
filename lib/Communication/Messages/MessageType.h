@@ -10,5 +10,6 @@ enum class MessageType : uint8_t
     RobotState,
     DriveCommand,
     SetRobotMode,
-    SetAutonomousBehavior
+    SetAutonomousBehavior,
+    FrontScanMeasurement
 };

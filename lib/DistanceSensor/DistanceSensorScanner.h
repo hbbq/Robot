@@ -74,6 +74,8 @@ public:
     bool isContinuousSweepActive() const;
 
     const FrontScanState& frontScanState() const;
+    uint32_t sampleRevision() const;
+    uint32_t sampleFreshnessMs() const;
     FrontScanAssessment assessFront(
         uint16_t obstacleThresholdMillimeters) const;
 
@@ -118,6 +120,7 @@ private:
     DistanceSensorDirection _targetDirection =
         DistanceSensorDirection::Center;
     FrontScanState _frontScanState;
+    uint32_t _sampleRevision = 0;
     bool _continuousSweep = false;
     uint8_t _sweepIndex = 0;
     mutable bool _hasLoggedAssessment = false;

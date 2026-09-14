@@ -10,12 +10,14 @@
 #include <Messages/DriveCommandMessage.h>
 #include <Messages/SetRobotModeMessage.h>
 #include <Messages/SetAutonomousBehaviorMessage.h>
+#include <Messages/FrontScanMeasurementMessage.h>
 #include <Messages/MessageHeader.h>
 #include <RobotStateStore.h>
 #include <RemoteDriveState.h>
 #include <IClock.h>
 #include <RobotModeRequestStore.h>
 #include <AutonomousBehaviorRequestStore.h>
+#include <FrontScanMeasurementStore.h>
 
 #include <cstring>
 
@@ -46,6 +48,7 @@ MessageDispatcher::MessageDispatcher(
     RemoteDriveState& remoteDriveState,
     RobotModeRequestStore& robotModeRequestStore,
     AutonomousBehaviorRequestStore& autonomousBehaviorRequestStore,
+    FrontScanMeasurementStore& frontScanMeasurementStore,
     IClock& clock)
     : _deviceRegistry(deviceRegistry),
       _robotStateStore(robotStateStore),
@@ -53,6 +56,7 @@ MessageDispatcher::MessageDispatcher(
         _robotModeRequestStore(robotModeRequestStore),
         _autonomousBehaviorRequestStore(
             autonomousBehaviorRequestStore),
+        _frontScanMeasurementStore(frontScanMeasurementStore),
       _clock(clock)
 {
 }
@@ -143,9 +147,60 @@ void MessageDispatcher::onReceive(
                 rssi);
             break;
 
+        case MessageType::FrontScanMeasurement:
+            handleFrontScanMeasurement(
+                senderMac,
+                data,
+                size,
+                rssi);
+            break;
+
         default:
             break;
     }
+}
+
+void MessageDispatcher::handleFrontScanMeasurement(
+    const uint8_t senderMac[6],
+    const uint8_t* data,
+    size_t size,
+    int8_t rssi)
+{
+    (void)rssi;
+
+    if (!senderMatchesDeviceType(
+            _deviceRegistry,
+            senderMac,
+            DeviceType::Robot))
+    {
+        return;
+    }
+
+    const auto message =
+        MessageSerializer::deserialize<FrontScanMeasurementMessage>(
+            data,
+            size);
+
+    if (!message ||
+        message->sampleFreshnessMs == 0 ||
+        !isValidFrontScanSectorMessage(message->left) ||
+        !isValidFrontScanSectorMessage(message->center) ||
+        !isValidFrontScanSectorMessage(message->right))
+    {
+        return;
+    }
+
+    const FrontScanMeasurement measurement
+    {
+        .left = toFrontScanSectorMeasurement(message->left),
+        .center = toFrontScanSectorMeasurement(message->center),
+        .right = toFrontScanSectorMeasurement(message->right),
+        .sampleFreshnessMs = message->sampleFreshnessMs
+    };
+
+    _frontScanMeasurementStore.setMeasurement(
+        measurement,
+        _clock.millis());
 }
 
 void MessageDispatcher::handleAnnouncement(

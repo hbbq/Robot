@@ -29,6 +29,8 @@
 #include <CalibrationBehavior.h>
 #include <CalibrationRequestStore.h>
 #include <CalibrationWebServer.h>
+#include <FrontScanMeasurementStore.h>
+#include <FrontScanTelemetryPublisher.h>
 
 #include <Tb6612MotorController.h>
 #include <Tb6612StandbyController.h>
@@ -58,8 +60,13 @@ private:
     NtpTimeService _timeService;
     CalibrationRequestStore _calibrationRequestStore;
 
-    DeviceRegistry _deviceRegistry;
+    RobotStateStore _robotStateStore;
     RemoteDriveState _remoteDriveState;
+    RobotModeRequestStore _robotModeRequestStore;
+    AutonomousBehaviorRequestStore _autonomousBehaviorRequestStore;
+    FrontScanMeasurementStore _frontScanMeasurementStore;
+
+    DeviceRegistry _deviceRegistry;
     MessageDispatcher _messageDispatcher;
     EspNowManager _espNow;
     DeviceNetworkService _deviceNetwork;
@@ -71,6 +78,7 @@ private:
     MotionController _motionController;
     RobotDistanceSensor _frontDistanceSensor;
     DistanceSensorScanner _distanceSensorScanner;
+    FrontScanTelemetryPublisher _frontScanTelemetryPublisher;
     ReadinessController _readiness;
     LedController _statusLed;
     IdleBehavior _idleBehavior;
@@ -86,8 +94,6 @@ private:
     bool _distanceSensorFunctional = false;
     bool _wasReady = false;
     
-    RobotStateStore _robotStateStore;
-
     AutonomousBehaviorType _selectedAutonomousBehavior =
         AutonomousBehaviorType::RandomDrive;
 
@@ -95,9 +101,6 @@ private:
     RobotMotion _lastSentMotion = RobotMotion::Stopped;
     AutonomousBehaviorType _lastSentAutonomousBehavior =
         AutonomousBehaviorType::RandomDrive;
-
-    RobotModeRequestStore _robotModeRequestStore;
-    AutonomousBehaviorRequestStore _autonomousBehaviorRequestStore;
 
     uint32_t _lastRobotStateSentMs = 0;
 

@@ -154,6 +154,16 @@ const FrontScanState& DistanceSensorScanner::frontScanState() const
     return _frontScanState;
 }
 
+uint32_t DistanceSensorScanner::sampleRevision() const
+{
+    return _sampleRevision;
+}
+
+uint32_t DistanceSensorScanner::sampleFreshnessMs() const
+{
+    return _config.sampleFreshnessMs;
+}
+
 FrontScanAssessment DistanceSensorScanner::assessFront(
     uint16_t obstacleThresholdMillimeters) const
 {
@@ -225,6 +235,7 @@ void DistanceSensorScanner::completeReading(
     sample.hasSample = true;
     sample.valid = valid;
     sample.capturedAtMs = nowMs;
+    ++_sampleRevision;
 
     if (valid)
     {
